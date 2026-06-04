@@ -177,142 +177,813 @@ const GAMES_3D = [
     ],
   },
 ];
-
-// ── YAML Builder ──────────────────────────────────────────────────────────────
-function buildYAML(game, is3D, gameTitle, gameDesc, imageName, ai) {
-  const slug = (gameTitle||"my-game").toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"");
+// ══════════════════════════════════════════════════════════════════════════════
+// buildSpec：唯一產出函式，YAML + MD 合併成一份完整規格書
+// AI 只需讀這一份文件就能做出完整且正確的遊戲
+// ══════════════════════════════════════════════════════════════════════════════
+function buildSpec(game, is3D, gameTitle, gameDesc, imageName, ai) {
   const a = ai || {};
-  const obj = {
-    meta: {
-      game_title: gameTitle || "我的遊戲",
-      game_slug: slug,
-      game_type: game.id,
-      is_3d: is3D,
-      description: gameDesc,
-      created_at: new Date().toISOString().split("T")[0],
-      player_image: imageName ? `public/assets/${imageName}` : "public/assets/player.png",
-      image_role: game.imageUse || (is3D ? "3D 場景素材" : "遊戲主角圖片"),
+  const slug = (gameTitle||"my-game").toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"") || "my-game";
+  const imgPath = imageName ? `public/assets/${imageName}` : "public/assets/player.png";
+  const date = new Date().toLocaleDateString("zh-TW");
+  const pkgs = is3D ? (game.install||[]) : ["npm install phaser"];
+
+  // ── 各遊戲類型專屬詳細規格 ──────────────────────────────────────────────
+  const specMap = {
+    platformer: {
+      yaml_gameplay: [
+        `  gravity: 800`,`  jump_force: -500`,`  move_speed: 200`,`  lives: 3`,
+        `  level_1_name: "${a.level1||gameDesc.slice(0,8)+" 第一關"}"`,
+        `  level_2_name: "${a.level2||gameDesc.slice(0,8)+" 第二關"}"`,
+        `  enemy_type: "${a.enemy||"巡邏守衛"}"`,
+        `  item_name: "${a.item||"星星"}"`,
+        `  item_score: 10`,`  win_condition: "reach_flag"`,`  lose_condition: "lives_zero"`,
+      ],
+      md_detail: `
+### 場景與物理
+| 參數 | 數值 |
+|------|------|
+| 場景尺寸 | 1280 × 360 px（橫向捲軸）|
+| 重力加速度 | 800 px/s² |
+| 跳躍初速度 | -500 px/s（向上）|
+| 移動速度 | 200 px/s |
+| 玩家生命 | 3 顆愛心 |
+
+### 關卡設計
+| 項目 | 第一關 | 第二關 |
+|------|--------|--------|
+| 名稱 | ${a.level1||gameDesc.slice(0,8)+" 第一關"} | ${a.level2||gameDesc.slice(0,8)+" 第二關"} |
+| 平台數 | 8 個 | 12 個 |
+| 敵人數 | 3 隻 | 6 隻 |
+| 收集物 | 5 個 | 8 個 |
+
+### 敵人行為
+- 左右巡邏，碰牆折返
+- 玩家**踩頭**：消滅敵人，得 +10 分
+- 玩家**側碰**：扣 1 命，無敵 2 秒
+
+### 圖片套用
+\`\`\`typescript
+// Phaser 3 — 在 preload() 中
+this.load.image('player', '${imgPath}')
+// 在 create() 中建立 Sprite
+this.player = this.physics.add.sprite(100, 200, 'player').setScale(0.5)
+\`\`\``,
     },
-    tech: {
-      framework: "Next.js 14 (App Router)",
-      engine: game.stack || (is3D ? "React Three Fiber + Rapier" : "Phaser 3"),
-      deploy: "Vercel",
-      node: "20",
-      packages: is3D ? (game.install || []) : ["phaser", "next"],
+
+    topdown_shooter: {
+      yaml_gameplay: [
+        `  move_speed: 180`,`  bullet_speed: 400`,`  fire_rate: 0.3`,`  player_hp: 5`,
+        `  wave_1_enemy: "${a.enemy1||"小怪"}"`,`  wave_1_count: 5`,
+        `  wave_2_enemy: "${a.enemy2||"速度怪"}"`,`  wave_2_count: 10`,
+        `  boss_name: "${a.boss||"終極Boss"}"`,`  boss_hp: 30`,
+        `  map_theme: "${a.mapTheme||gameDesc.slice(0,20)}"`,`  obstacles: 15`,
+      ],
+      md_detail: `
+### 核心數值
+| 參數 | 數值 |
+|------|------|
+| 移動速度 | 180 px/s（8 方向）|
+| 子彈速度 | 400 px/s |
+| 射擊間隔 | 0.3 秒 |
+| 玩家 HP | 5 格 |
+
+### 波次設計
+| 波次 | 敵人 | 數量 | 出生間隔 |
+|------|------|------|---------|
+| Wave 1 | ${a.enemy1||"小怪"} | 5 | 2 秒 |
+| Wave 2 | ${a.enemy2||"速度怪"} | 10 | 1.5 秒 |
+| Wave 3 | Boss「${a.boss||"終極Boss"}」| 1（HP×30）| — |
+
+### 道具掉落（擊敗敵人後）
+- HP 回復：10% 機率
+- 速度提升：8% 機率
+- 連射強化：5% 機率
+
+### 圖片套用
+\`\`\`typescript
+this.load.image('player', '${imgPath}')
+this.player = this.physics.add.sprite(512, 384, 'player')
+// 滑鼠瞄準：旋轉角色朝向滑鼠位置
+\`\`\``,
     },
-    gameplay: {
-      type: game.id,
-      controls: game.controls,
-      win_condition: game.win,
-      features: game.features,
-      ...(is3D ? {
-        physics_engine: "Rapier (WASM)",
-        render_mode: "WebGL / Three.js",
-        camera: game.id === "fps_3d" ? "first_person" : "third_person",
-        world_theme: a.worldTheme || gameDesc.slice(0,30),
-        player_model: "low_poly_character",
-        map_size: "medium",
-      } : {
-        resolution: "800x600",
-        world_theme: a.worldTheme || gameDesc.slice(0,30),
-      }),
+
+    maze: {
+      yaml_gameplay: [
+        `  maze_width: 15`,`  maze_height: 15`,`  algorithm: "recursive_backtrack"`,
+        `  time_limit: 120`,`  move_speed: 150`,
+        `  key_count: ${a.keyCount||3}`,`  trap_type: "${a.trap||"尖刺"}"`,
+        `  trap_count: 5`,`  trap_penalty_sec: 10`,
+        `  hint_count: 3`,`  hint_radius: 3`,
+        `  intro_text: "${a.mazeIntro||"你被困在迷宮裡，找到出口逃脫吧！"}"`,
+        `  win_message: "${a.winMsg||"恭喜逃脫！"}"`,
+      ],
+      md_detail: `
+### 迷宮設定
+| 參數 | 數值 |
+|------|------|
+| 迷宮尺寸 | 15 × 15 格（每格 40 px）|
+| 生成算法 | Recursive Backtracking（確保有解）|
+| 時間限制 | 120 秒 |
+| 移動速度 | 150 px/s |
+
+### 道具與機關
+| 道具 | 數量 | 效果 |
+|------|------|------|
+| 金色鑰匙 | ${a.keyCount||3} 把 | 全收集才能開出口 |
+| ${a.trap||"尖刺"}陷阱 | 5 個 | 觸碰扣 10 秒時間 |
+| 提示道具 | 3 個 | 點亮周圍 3 格視野 |
+
+### 故事文字
+- **開場訊息：** 「${a.mazeIntro||"你被困在迷宮裡，找到出口逃脫吧！"}」
+- **過關訊息：** 「${a.winMsg||"恭喜逃脫成功！你真厲害！"}」`,
     },
-    customization: {
-      title_screen_text: gameTitle || "我的遊戲",
-      background_theme: a.theme || gameDesc.slice(0,20),
-      color_primary: (a.colors||[])[0] || "#4f46e5",
-      color_secondary: (a.colors||[])[1] || "#7c3aed",
-      enemy_name: a.enemy || "怪物",
-      item_name: a.item || "星星",
-      boss_name: a.boss || "終極Boss",
-      win_message: a.winMsg || "恭喜過關！你太厲害了！",
-      language: "zh-TW",
+
+    breakout: {
+      yaml_gameplay: [
+        `  ball_speed_init: 300`,`  ball_speed_inc: 20`,`  paddle_speed: 400`,`  lives: 3`,
+        `  level_1_rows: 4`,`  level_1_cols: 8`,`  brick_theme_1: "${a.brick1||"普通磚"}"`,
+        `  level_2_rows: 6`,`  level_2_cols: 10`,`  brick_theme_2: "${a.brick2||"石頭磚"}"`,
+        `  level_3_rows: 8`,`  level_3_cols: 12`,`  brick_theme_3: "${a.brick3||"鋼鐵磚"}"`,
+        `  special_brick: "${a.specialBrick||"爆炸磚（炸掉周圍3格）"}"`,
+      ],
+      md_detail: `
+### 核心數值
+| 參數 | 數值 |
+|------|------|
+| 場景 | 800 × 600 px |
+| 擋板 | 寬 100 px，Y = 560 |
+| 球半徑 | 8 px |
+| 初始球速 | 300 px/s，每次反彈 +20 |
+| 生命 | 3 顆球 |
+
+### 關卡設計
+| 關卡 | 排列 | 主題 | 特殊磚 |
+|------|------|------|--------|
+| Level 1 | 4×8 | ${a.brick1||"普通磚"} | 2 個 |
+| Level 2 | 6×10 | ${a.brick2||"石頭磚"} | 5 個 |
+| Level 3 | 8×12 | ${a.brick3||"鋼鐵磚"} | 8 個 |
+
+**特殊磚：** ${a.specialBrick||"爆炸磚（炸掉周圍 3 格）"}
+
+### 道具掉落
+- 擴大擋板：10% / 多球：5% / 慢速球：8%
+
+### 圖片套用
+\`\`\`typescript
+// 磚塊貼圖替換
+this.load.image('brick', '${imgPath}')
+\`\`\``,
     },
-    ai_build_instructions: {
-      summary: `請依照此 YAML 設定，用 ${game.stack || "Next.js + Phaser 3"} 實作一個完整可玩的「${game.name}」遊戲。`,
-      image_instruction: `上傳圖片路徑：public/assets/${imageName||"player.png"}，用途：${game.imageUse || "遊戲主角"}`,
-      required_features: game.features,
-      must_be_playable: true,
-      language_zh_tw: true,
-      deploy_ready: true,
-      ...(is3D && {
-        github_template: game.github,
-        clone_first: `git clone ${game.github} ${slug}`,
-        install_cmd: (game.install||[]).join(" && "),
-        note: `這是一個真實 3D 遊戲，請使用 React Three Fiber + Rapier 物理引擎，參考 ${game.github} 的實作方式。`,
-      }),
+
+    endless_runner: {
+      yaml_gameplay: [
+        `  init_speed: 300`,`  speed_inc: 10`,`  speed_interval_sec: 5`,
+        `  jump_force: -550`,`  double_jump: true`,`  slide_duration: 0.6`,
+        `  world_theme: "${a.worldTheme||gameDesc.slice(0,15)}"`,
+        `  obstacle_1: "${a.obs1||"大石頭"}"`,`  obstacle_1_action: "jump"`,
+        `  obstacle_2: "${a.obs2||"低枝樹幹"}"`,`  obstacle_2_action: "slide"`,
+        `  collectible: "${a.collectible||"金幣"}"`,`  collectible_score: 5`,
+        `  milestone_1_score: 100`,`  milestone_1_msg: "${a.msg1||"太厲害了！繼續加油！"}"`,
+        `  milestone_2_score: 500`,`  milestone_2_msg: "${a.msg2||"速度提升！小心障礙！"}"`,
+      ],
+      md_detail: `
+### 核心數值
+| 參數 | 數值 |
+|------|------|
+| 初始速度 | 300 px/s |
+| 速度增量 | +10 每 5 秒 |
+| 跳躍力道 | -550 px/s |
+| 二段跳 | ✅ 支援 |
+| 滑行持續 | 0.6 秒 |
+
+### 障礙物設計
+| 類型 | 高度 | 閃躲動作 |
+|------|------|---------|
+| ${a.obs1||"大石頭"} | 低 | 跳躍 |
+| ${a.obs2||"低枝樹幹"} | 高 | 滑行 |
+| ${a.obs3||"連續陷阱"} | 雙重 | 跳躍+滑行 |
+
+### 里程碑
+- **100 分：** 「${a.msg1||"太厲害了！繼續加油！"}」
+- **500 分：** 「${a.msg2||"速度提升！小心障礙！"}」新障礙物登場
+
+### 圖片套用
+\`\`\`typescript
+// 主角跑步動畫 Sprite Sheet（建議 4 幀 × 48px）
+this.load.spritesheet('player', '${imgPath}', { frameWidth: 48, frameHeight: 48 })
+this.anims.create({ key: 'run', frames: this.anims.generateFrameNumbers('player', { start:0, end:3 }), frameRate: 10, repeat: -1 })
+\`\`\``,
     },
-    deploy_steps: [
-      { step:1, cmd: `npx create-next-app@latest ${slug} --typescript --tailwind --app` },
-      { step:2, cmd: (game.install||["npm install phaser"]).join(" && ") },
-      { step:3, cmd: "mkdir -p public/assets" },
-      { step:4, cmd: "# 把此 YAML 放入專案根目錄：game-config.yml" },
-      { step:5, cmd: "# 把下方完整 Prompt 貼給 Codex 或 Claude Code" },
-      { step:6, cmd: "npm run dev" },
-      { step:7, cmd: "npx vercel --prod" },
-    ],
+
+    tower_defense: {
+      yaml_gameplay: [
+        `  start_gold: 150`,`  gold_per_kill: 10`,`  base_hp: 20`,`  total_waves: 10`,
+        `  map_theme: "${a.mapTheme||gameDesc.slice(0,20)}"`,
+        `  tower_1_name: "${a.tower1||"基礎箭塔"}"`,`  tower_1_cost: 50`,`  tower_1_dmg: 10`,`  tower_1_range: 150`,
+        `  tower_2_name: "${a.tower2||"狙擊塔"}"`,`  tower_2_cost: 100`,`  tower_2_dmg: 40`,`  tower_2_range: 300`,
+        `  tower_3_name: "${a.tower3||"火焰塔"}"`,`  tower_3_cost: 150`,`  tower_3_dmg: 20`,`  tower_3_splash: true`,
+        `  enemy_1_name: "${a.enemy1||"小怪"}"`,`  enemy_1_hp: 50`,`  enemy_1_speed: 80`,
+        `  enemy_2_name: "${a.enemy2||"速度怪"}"`,`  enemy_2_hp: 30`,`  enemy_2_speed: 150`,
+        `  enemy_3_name: "${a.enemy3||"大鐵甲"}"`,`  enemy_3_hp: 200`,`  enemy_3_speed: 50`,
+        `  defend_target: "${a.defend||"王國城堡"}"`,
+      ],
+      md_detail: `
+### 地圖與資源
+| 參數 | 數值 |
+|------|------|
+| 地圖主題 | ${a.mapTheme||gameDesc.slice(0,20)} |
+| 格子大小 | 40 px |
+| 起始金幣 | 150 枚 |
+| 擊殺獎勵 | +10 金幣 |
+| 基地 HP | 20 |
+| 總波次 | 10 波 |
+
+### 防禦塔
+| 塔名 | 費用 | 傷害 | 射程 | 攻速 | 特效 |
+|------|------|------|------|------|------|
+| ${a.tower1||"基礎箭塔"} | 50 | 10 | 150 | 1/s | — |
+| ${a.tower2||"狙擊塔"} | 100 | 40 | 300 | 0.4/s | 穿透 |
+| ${a.tower3||"火焰塔"} | 150 | 20 | 120 | 0.8/s | 範圍濺射 |
+
+### 敵人種類
+| 名稱 | HP | 速度 | 獎勵 |
+|------|----|----|------|
+| ${a.enemy1||"小怪"} | 50 | 80 | 10 金 |
+| ${a.enemy2||"速度怪"} | 30 | 150 | 15 金 |
+| ${a.enemy3||"大鐵甲"} | 200 | 50 | 30 金 |
+
+**守護目標：** ${a.defend||"王國城堡"}`,
+    },
+
+    memory_match: {
+      yaml_gameplay: [
+        `  flip_back_delay: 1.2`,`  easy_grid: "4x3"`,`  easy_pairs: 6`,`  easy_time: 90`,
+        `  normal_grid: "4x4"`,`  normal_pairs: 8`,`  normal_time: 60`,
+        `  hard_grid: "6x4"`,`  hard_pairs: 12`,`  hard_time: 45`,
+        `  card_back_color: "${a.cardBack||"#4f46e5"}"`,
+        `  card_style: "${a.cardStyle||"圓角卡片"}"`,
+        `  bg_color: "${a.bgColor||"#1a1a2e"}"`,
+      ],
+      md_detail: `
+### 難度模式
+| 難度 | 格子 | 配對數 | 時間 |
+|------|------|--------|------|
+| 簡單 | 4×3 | 6 對 | 90 秒 |
+| 普通 | 4×4 | 8 對 | 60 秒 |
+| 困難 | 6×4 | 12 對 | 45 秒 |
+
+### 翻牌機制
+- 翻回延遲：1.2 秒（讓玩家記憶）
+- 翻牌動畫：Y 軸 180° 翻轉（0.3 秒）
+- 配對成功：卡片保持正面 + 閃光特效
+
+### ⭐ 圖片直接變牌面
+\`\`\`typescript
+// 上傳的圖片自動裁切成多個配對區塊
+const img = new Image()
+img.src = '${imgPath}'
+// 裁切為 N × M 等分，每份作為一張牌的正面
+// 配對牌使用相同裁切區塊
+\`\`\`
+- 牌背顏色：${a.cardBack||"#4f46e5"}
+- 背景顏色：${a.bgColor||"#1a1a2e"}`,
+    },
+
+    snake_evolution: {
+      yaml_gameplay: [
+        `  init_speed_ms: 150`,`  speed_inc_per_50pts: 5`,`  grid_size: 20`,`  init_length: 3`,
+        `  grid_color: "${a.gridColor||"#111827"}"`,`  snake_color: "${a.snakeColor||"#2ecc71"}"`,
+        `  wall_kill: true`,
+        `  food_1: "${a.food1||"蘋果"}"`,`  food_1_score: 10`,`  food_1_rate: 0.7`,
+        `  food_2: "${a.food2||"黃金蘋果"}"`,`  food_2_score: 30`,`  food_2_rate: 0.15`,
+        `  food_3: "${a.food3||"閃電"}"`,`  food_3_effect: "speed_up"`,`  food_3_rate: 0.1`,
+        `  food_4: "${a.food4||"冰塊"}"`,`  food_4_effect: "slow_down"`,`  food_4_rate: 0.05`,
+        `  portal_enabled: true`,`  portal_count: 2`,
+        `  obstacle_appear_at: 50`,`  obstacle_count: ${a.obstacleCount||5}`,
+        `  msg_at_length_10: "${a.snakeMsg1||"傳送門出現！"}"`,
+        `  msg_at_length_20: "${a.snakeMsg2||"障礙物登場！"}"`,
+      ],
+      md_detail: `
+### 核心數值
+| 參數 | 數值 |
+|------|------|
+| 初始速度 | 150 ms/格（越低越快）|
+| 速度增量 | 每得 50 分 -5 ms |
+| 格子大小 | 20 px |
+| 撞牆即死 | ✅ |
+
+### 食物系統
+| 名稱 | 分數 | 效果 | 出現率 |
+|------|------|------|--------|
+| ${a.food1||"蘋果"} | +10 | 長大 1 格 | 70% |
+| ${a.food2||"黃金蘋果"} | +30 | 不長大 | 15% |
+| ${a.food3||"閃電"} | +5 | 加速 3 秒 | 10% |
+| ${a.food4||"冰塊"} | +5 | 減速 3 秒 | 5% |
+
+### 解鎖進程
+- **長度 10：** 「${a.snakeMsg1||"傳送門出現！"}」→ 啟用 2 個傳送門
+- **長度 20：** 「${a.snakeMsg2||"障礙物登場！"}」→ 出現 ${a.obstacleCount||5} 個固定障礙
+
+### 圖片套用
+\`\`\`typescript
+// 蛇頭貼圖（4 個方向各一張）
+this.load.image('head_up',    '${imgPath}')
+this.load.image('head_down',  '${imgPath}')
+this.load.image('head_left',  '${imgPath}')
+this.load.image('head_right', '${imgPath}')
+\`\`\``,
+    },
+
+    racing_3d: {
+      yaml_gameplay: [
+        `  engine: "react-three-rapier"`,`  github_ref: "https://github.com/pmndrs/racing-game"`,
+        `  camera: "third_person_follow"`,`  cam_back: 5`,`  cam_up: 2`,
+        `  max_speed: 120`,`  acceleration: 1500`,`  brake_friction: 0.1`,
+        `  suspension: "independent_front_rear"`,
+        `  track_theme: "${a.worldTheme||gameDesc.slice(0,20)}"`,
+        `  track_type: "closed_circuit"`,`  total_laps: 3`,`  track_width: 12`,
+        `  ai_opponents: 2`,`  countdown: "3-2-1-GO"`,
+      ],
+      md_detail: `
+### 車輛物理（Rapier）
+| 參數 | 數值 |
+|------|------|
+| 最高速度 | 120 km/h |
+| 加速力道 | 1500 N |
+| 手煞車摩擦係數 | 0.1（漂移）|
+| 懸吊系統 | 前後獨立彈簧阻尼 |
+| 物理更新率 | 60 fps |
+
+### 賽道設計
+- **主題：** ${a.worldTheme||gameDesc.slice(0,20)}
+- **類型：** 封閉環形，寬 12m，含護欄碰撞體
+- **總圈數：** 3 圈
+- **AI 對手：** 2 台（路徑跟隨）
+
+### 競速系統
+- 最快圈速 HUD 顯示
+- 起跑倒數：3-2-1-GO 動畫
+- 過終點線觸發圈數計數
+
+### 圖片套用（材質貼圖）
+\`\`\`typescript
+import { useTexture } from '@react-three/drei'
+const carTexture = useTexture('${imgPath}')
+<meshStandardMaterial map={carTexture} />
+\`\`\``,
+    },
+
+    fps_3d: {
+      yaml_gameplay: [
+        `  engine: "three.js + rapier"`,`  github_ref: "https://github.com/lume/lume"`,
+        `  fov: 75`,`  mouse_lock: true`,
+        `  player_hp: 100`,`  hit_damage: 20`,`  regen_delay: 3`,
+        `  move_speed: 5`,`  sprint_speed: 8`,`  jump_height: 1.5`,
+        `  weapon_1: "pistol"`,`  weapon_1_dmg: 20`,`  weapon_1_firerate: 2`,`  weapon_1_ammo: 12`,
+        `  weapon_2: "shotgun"`,`  weapon_2_dmg: 60`,`  weapon_2_firerate: 0.5`,
+        `  enemy_count: 10`,`  enemy_ai: "patrol_and_chase"`,
+        `  map_theme: "${a.worldTheme||gameDesc.slice(0,20)}"`,
+      ],
+      md_detail: `
+### 玩家系統
+| 參數 | 數值 |
+|------|------|
+| HP | 100，被擊中 -20 |
+| 回血 | 3 秒無受傷後開始 |
+| 移動速度 | 5 m/s，衝刺 8 m/s |
+| 跳躍高度 | 1.5 m |
+| FOV | 75° |
+
+### 武器系統
+| 武器 | 傷害 | 射速 | 彈匣 |
+|------|------|------|------|
+| 手槍 | 20 | 2/s | 12 |
+| 霰彈槍 | 60 | 0.5/s | 6 |
+
+子彈系統：Raycasting（即時命中，無彈道下墜）
+
+### 敵人 AI
+- 巡邏狀態：固定路徑左右巡邏
+- 警覺狀態：發現玩家（視野 15m）→ 追擊
+- 攻擊狀態：距離 5m 內開始射擊
+
+### 圖片套用
+\`\`\`typescript
+// HUD 頭像 / 武器貼圖
+const hudTexture = useTexture('${imgPath}')
+\`\`\``,
+    },
+
+    marble_3d: {
+      yaml_gameplay: [
+        `  engine: "react-three-rapier"`,`  github_ref: "https://github.com/pmndrs/react-three-rapier"`,
+        `  ball_radius: 0.3`,`  gravity: -9.81`,`  ball_density: 1.5`,
+        `  platform_friction: 0.8`,`  ball_restitution: 0.2`,`  control_force: 15`,
+        `  level_1: "直線+轉彎平台（教學關）"`,
+        `  level_2: "窄路橋+旋轉平台"`,
+        `  level_3: "移動平台+彈射板"`,
+        `  checkpoint_respawn: true`,
+      ],
+      md_detail: `
+### 物理設定（Rapier）
+| 參數 | 數值 |
+|------|------|
+| 球半徑 | 0.3 m |
+| 重力 | -9.81 m/s² |
+| 球體密度 | 1.5（影響滾動慣性）|
+| 平台摩擦 | 0.8 |
+| 反彈係數 | 0.2 |
+| 控制力 | 15 N（施加在球上）|
+
+### 關卡設計
+| 關卡 | 主題 | 特點 |
+|------|------|------|
+| Level 1 | 直線+轉彎 | 教學關，無障礙 |
+| Level 2 | 窄路橋 | 旋轉平台 |
+| Level 3 | 移動平台 | 彈射板 |
+
+掉落即重置至最近檢查點（Checkpoint 系統）
+
+### 圖片套用（貼在球體表面！）
+\`\`\`typescript
+const ballTexture = useTexture('${imgPath}')
+<mesh><sphereGeometry args={[0.3,32,32]} /><meshStandardMaterial map={ballTexture} /></mesh>
+\`\`\``,
+    },
+
+    platformer_3d: {
+      yaml_gameplay: [
+        `  engine: "react-three-fiber + ecctrl + rapier"`,`  github_ref: "https://github.com/pmndrs/ecctrl"`,
+        `  art_style: "low_poly"`,`  camera: "third_person_isometric"`,
+        `  capsule_radius: 0.3`,`  capsule_height: 1.8`,
+        `  move_speed: 4`,`  jump_force: 8`,`  sprint_multiplier: 1.6`,`  max_slope: 45`,
+        `  collectible: "${a.item||"星星"}"`,`  collectible_count: 20`,
+        `  world_theme: "${a.worldTheme||gameDesc.slice(0,20)}"`,
+        `  hazard: "深淵（掉落重置）"`,`  goal: "旋轉傳送門"`,
+      ],
+      md_detail: `
+### 角色控制（ecctrl）
+| 參數 | 數值 |
+|------|------|
+| 移動速度 | 4 m/s |
+| 跳躍力道 | 8 N/kg |
+| 衝刺倍率 | ×1.6 |
+| 最大爬坡 | 45° |
+| 碰撞體 | 膠囊（半徑0.3m, 高1.8m）|
+
+### 場景設計
+- **主題：** ${a.worldTheme||gameDesc.slice(0,20)}，低多邊形美術風格
+- **收集物：** ${a.item||"星星"} × 20 個，分散場景中
+- **危險區域：** 掉入深淵 → 重置至最近 Checkpoint
+- **終點：** 旋轉發光傳送門（碰觸觸發過關）
+
+### 圖片套用
+\`\`\`typescript
+// 套用至角色模型材質
+const charTexture = useTexture('${imgPath}')
+<meshStandardMaterial map={charTexture} />
+\`\`\``,
+    },
+
+    dungeon_3d: {
+      yaml_gameplay: [
+        `  engine: "react-three-fiber + react-three-npc + rapier"`,`  github_ref: "https://github.com/ssethsara/react-three-npc"`,
+        `  camera: "third_person_30deg"`,`  art_style: "low_poly_dungeon"`,
+        `  player_hp: 100`,`  player_atk: 25`,`  atk_range: 1.5`,`  atk_speed: 1`,
+        `  enemy_1: "${a.enemy1||"小骷髏"}"`,`  enemy_1_hp: 30`,`  enemy_1_ai: "patrol_chase"`,
+        `  enemy_2: "${a.enemy2||"石頭人"}"`,`  enemy_2_hp: 80`,`  enemy_2_ai: "guard"`,
+        `  boss: "${a.boss||"地城王"}"`,`  boss_hp: 300`,`  boss_ai: "skill_ai"`,
+        `  rooms: 5`,`  room_size: "10x10m"`,`  corridor_width: "3m"`,
+      ],
+      md_detail: `
+### 戰鬥系統
+| 參數 | 數值 |
+|------|------|
+| 玩家 HP | 100 |
+| 玩家攻擊傷害 | 25 |
+| 攻擊範圍 | 1.5 m |
+| 攻速 | 1 次/秒 |
+
+### 怪物 AI（Yuka.js）
+| 怪物 | HP | 傷害 | 行為 | 獎勵 |
+|------|----|----|------|------|
+| ${a.enemy1||"小骷髏"} | 30 | 10 | 巡邏→追擊 | 20 金 |
+| ${a.enemy2||"石頭人"} | 80 | 25 | 站立守衛 | 50 金 |
+| ${a.boss||"地城王"} | 300 | 40 | 技能 AI | 200 金 |
+
+### 地城生成
+- 5 個房間隨機程序連接
+- 隨機放置怪物與寶箱
+- 房間 10m×10m，走廊 3m 寬
+
+### 圖片套用
+\`\`\`typescript
+const charTexture = useTexture('${imgPath}')
+// 套用至主角低多邊形人物模型
+\`\`\``,
+    },
+
+    spaceshooter_3d: {
+      yaml_gameplay: [
+        `  engine: "react-three-fiber + drei + zustand"`,`  github_ref: "https://github.com/pmndrs/react-three-fiber"`,
+        `  scene: "infinite_space"`,`  starfield: true`,
+        `  max_speed: 50`,`  acceleration: 20`,`  auto_level: true`,
+        `  weapon_cooldown: 0.25`,`  bullet_type: "raycast"`,
+        `  enemy_1: "偵察艦"`,`  enemy_1_hp: 15`,`  enemy_1_speed: 30`,
+        `  enemy_2: "戰鬥艦"`,`  enemy_2_hp: 40`,`  enemy_2_speed: 20`,
+        `  enemy_3: "旗艦"`,`  enemy_3_hp: 120`,`  enemy_3_speed: 10`,
+        `  total_waves: 5`,`  enemies_per_wave_inc: 3`,
+        `  world_theme: "${a.worldTheme||gameDesc.slice(0,20)}"`,
+      ],
+      md_detail: `
+### 飛船系統
+| 參數 | 數值 |
+|------|------|
+| 最大速度 | 50 units/s |
+| 加速度 | 20 units/s² |
+| 自動水平對齊 | ✅（防暈機）|
+| 武器冷卻 | 0.25 秒 |
+
+### 敵艦種類
+| 名稱 | HP | 速度 | 行為 |
+|------|----|----|------|
+| 偵察艦 | 15 | 30 | 快速追蹤 |
+| 戰鬥艦 | 40 | 20 | 保持距離射擊 |
+| 旗艦 | 120 | 10 | 週期技能 |
+
+### 波次設計
+5 波，每波 +3 艘敵艦，第 5 波出現旗艦
+
+### 視覺特效（@react-three/postprocessing）
+- 爆炸：火焰粒子球 + 衝擊波
+- 環境：流星群 + 遠景星雲 + Bloom 光暈
+
+### 圖片套用
+\`\`\`typescript
+const shipTexture = useTexture('${imgPath}')
+<meshStandardMaterial map={shipTexture} />  // 飛船機身貼圖
+\`\`\``,
+    },
   };
-  return jsonToYaml(obj);
-}
 
-function jsonToYaml(obj, indent=0) {
-  const pad = "  ".repeat(indent);
-  let out = "";
-  for (const [k,v] of Object.entries(obj)) {
-    if (v===null||v===undefined) continue;
-    if (Array.isArray(v)) {
-      out += `${pad}${k}:\n`;
-      for (const item of v) {
-        if (typeof item==="object") {
-          const lines = jsonToYaml(item,indent+2).split("\n").filter(Boolean);
-          out += `${"  ".repeat(indent+1)}- ${lines[0].trim()}\n`;
-          for (let i=1;i<lines.length;i++) out += `${lines[i]}\n`;
-        } else out += `${"  ".repeat(indent+1)}- "${item}"\n`;
-      }
-    } else if (typeof v==="object") {
-      out += `${pad}${k}:\n${jsonToYaml(v,indent+1)}`;
-    } else {
-      out += `${pad}${k}: ${typeof v==="string"?`"${v}"`:v}\n`;
-    }
-  }
-  return out;
-}
+  const spec = specMap[game.id] || { yaml_gameplay: [], md_detail: "" };
 
-function buildPrompt(game, is3D, gameTitle, yaml, tool) {
-  const base = `我要建立一個「${game.name}」類型的網頁遊戲，遊戲標題是「${gameTitle}」。
+  // ── 組合 YAML 區塊 ────────────────────────────────────────────────────────
+  const yamlBlock = [
+    `# ══════════════════════════════════════════════════════`,
+    `# 遊戲規格 YAML — 此設定檔與下方 Markdown 為同一份規格`,
+    `# 請 AI 同時參考 YAML 數值與 Markdown 說明來實作遊戲`,
+    `# ══════════════════════════════════════════════════════`,
+    ``,
+    `meta:`,
+    `  game_title: "${gameTitle||"我的遊戲"}"`,
+    `  game_slug: "${slug}"`,
+    `  game_type: "${game.id}"`,
+    `  is_3d: ${is3D}`,
+    `  description: "${gameDesc.replace(/"/g,"'")}"`,
+    `  created_at: "${date}"`,
+    `  language: "zh-TW"`,
+    ``,
+    `player_image:`,
+    `  path: "${imgPath}"`,
+    `  role: "${game.imageUse||"遊戲主角圖片"}"`,
+    `  size_recommend: "${is3D?"512×512 px（材質貼圖）":"48×48 px（Sprite）"}"`,
+    ``,
+    `tech:`,
+    `  framework: "Next.js 14 App Router + TypeScript"`,
+    `  engine: "${game.stack||"Phaser 3"}"`,
+    `  deploy: "Vercel"`,
+    `  node_version: ">=20"`,
+    `  packages:`,
+    ...pkgs.map(p => `    - "${p}"`),
+    ``,
+    `gameplay:`,
+    `  type: "${game.id}"`,
+    `  controls: "${game.controls}"`,
+    `  win_condition: "${game.win}"`,
+    `  required_features:`,
+    ...game.features.map(f => `    - "${f}"`),
+    ...spec.yaml_gameplay,
+    ``,
+    `customization:`,
+    `  enemy_name: "${a.enemy||"怪物"}"`,
+    `  item_name: "${a.item||"星星"}"`,
+    `  boss_name: "${a.boss||"終極Boss"}"`,
+    `  world_theme: "${a.worldTheme||gameDesc.slice(0,30)}"`,
+    `  color_primary: "${(a.colors||[])[0]||"#4f46e5"}"`,
+    `  color_secondary: "${(a.colors||[])[1]||"#7c3aed"}"`,
+    `  win_message: "${a.winMsg||"恭喜過關！你太厲害了！"}"`,
+    ``,
+    `ai_contract:`,
+    `  # ⚠️ 以下是 AI 與設計者的共識協議，AI 必須嚴格遵守`,
+    `  must_be_playable_in_browser: true`,
+    `  game_route: "/game"`,
+    `  resolution: "1280x720 桌機瀏覽器"`,
+    `  all_ui_in_zh_tw: true`,
+    `  image_must_be_used: true`,
+    `  image_path: "${imgPath}"`,
+    `  image_role: "${game.imageUse||"主角"}"`,
+    `  deploy_ready: true`,
+    `  no_external_assets: true`,
+    `  ${is3D ? `use_real_physics: true` : `use_phaser3: true`}`,
+    `  ${is3D ? `github_reference: "${game.github||""}"` : `canvas_in_client_component: true`}`,
+  ].join("\n");
 
-## 技術棧
-${game.stack || "Next.js 14 + Phaser 3"}
-部署平台：Vercel
+  // ── 組合完整 Markdown 規格書 ──────────────────────────────────────────────
+  return `# 🎮 ${gameTitle||"我的遊戲"} — 遊戲開發完整規格書
+> **產出日期：** ${date}　**類型：** ${game.name}（${is3D?"真實 3D":"2D 網頁遊戲"}）
+> **技術棧：** ${game.stack||"Next.js 14 + Phaser 3"}　**部署：** Vercel
+>
+> ⚠️ **本文件同時包含 YAML 設定與 Markdown 說明，是 AI 與設計者的共同規格協議。**
+> AI 實作時必須嚴格遵守所有數值與規則，不得自行更改核心邏輯。
 
-${is3D ? `## 3D 遊戲特別說明
-這是一個真實 3D 遊戲，請使用 React Three Fiber（R3F）+ Rapier 物理引擎實作。
-參考這個 GitHub 專案的架構：${game.github}
-` : ""}
-## 遊戲規格（來自 YAML）
-\`\`\`yaml
-${yaml}
+---
+
+## 一、專案概述
+
+| 項目 | 內容 |
+|------|------|
+| 遊戲名稱 | **${gameTitle||"我的遊戲"}** |
+| 遊戲類型 | ${game.name}（${is3D?"真實 3D WebGL":"2D 瀏覽器遊戲"}）|
+| 技術棧 | ${game.stack||"Next.js 14 + Phaser 3"} |
+| 部署平台 | Vercel |
+| 操作方式 | ${game.controls} |
+| 過關條件 | ${game.win} |
+| 目標解析度 | 1280×720（桌機瀏覽器）|
+| 介面語言 | 繁體中文 |
+| 玩家圖片路徑 | \`${imgPath}\` |
+| 圖片用途 | ${game.imageUse||"遊戲主角"} |
+
+**遊戲描述：** ${gameDesc}
+
+---
+
+## 二、技術架構
+
+\`\`\`
+框架：Next.js 14（App Router + TypeScript）
+${is3D?`遊戲引擎：React Three Fiber（R3F）v8
+物理引擎：@react-three/rapier（Rapier WASM）
+參考 GitHub：${game.github||""}
+3D 輔助：@react-three/drei`:`遊戲引擎：Phaser 3.x
+畫布：Phaser.Game → 嵌入 Next.js Client Component`}
+狀態管理：Zustand
+部署：Vercel（npm run build → vercel --prod）
+Node.js：>= 20
 \`\`\`
 
-## 必須實作的功能
-${game.features.map(f=>`- ${f}`).join("\n")}
+### 安裝指令
+\`\`\`bash
+npx create-next-app@latest ${slug} --typescript --tailwind --app
+cd ${slug}
+${pkgs.join("\n")}
+mkdir -p public/assets
+\`\`\`
 
-## 操作方式
-${game.controls}
+### 必要功能清單
+${game.features.map(f=>`- ✅ ${f}`).join("\n")}
 
-## 過關條件
-${game.win}
+---
 
-## 要求
-- 遊戲嵌入 Next.js 的 /game 路由頁面
-- 所有 UI 使用繁體中文
-- 在桌機 1280x720 正常遊玩
-- 圖片放在 public/assets/ 並套用至 YAML 指定用途
-- 完成後可直接 vercel --prod 部署`;
+## 三、遊戲詳細規格
+${spec.md_detail}
 
+---
+
+## 四、AI 與設計者共識協議（Contract）
+
+> 以下規則是設計者的需求，AI **必須逐條遵守**，不得以「預設值」或「簡化實作」跳過任何一條：
+
+| # | 規則 | 說明 |
+|---|------|------|
+| 1 | **遊戲必須真實可玩** | 打開 \`/game\` 頁面即可操控，不是展示 demo 或靜態畫面 |
+| 2 | **圖片必須套用** | \`${imgPath}\` 必須出現在遊戲中，用途：${game.imageUse||"主角"} |
+| 3 | **數值不得自行修改** | 所有 YAML 中的數值（速度、HP、傷害…）必須與規格書一致 |
+| 4 | **繁體中文介面** | 所有 HUD、訊息、按鈕一律使用繁體中文 |
+| 5 | **1280×720 正常運作** | 在此解析度下完整顯示，不能有元素超出畫面 |
+| 6 | **Client Component** | Phaser / R3F Canvas 必須在 \`'use client'\` 元件中 |
+| ${is3D?"7":"7"} | **${is3D?"真實 3D 物理":"Phaser 3 實作"}** | ${is3D?`必須使用 @react-three/rapier，不能用 CSS 3D 變形偽裝`:`必須使用 Phaser 3 的 Physics.Arcade 系統`} |
+| 8 | **Vercel 部署就緒** | \`npm run build\` 必須成功，無 TypeScript 錯誤 |
+
+---
+
+## 五、檔案結構
+
+\`\`\`
+${slug}/
+├── src/app/
+│   ├── page.tsx           ← 首頁（遊戲入口按鈕）
+│   ├── game/
+│   │   └── page.tsx       ← 遊戲主頁面（'use client'）
+│   └── layout.tsx
+├── components/game/
+│   ├── GameCanvas.tsx     ← 遊戲畫布主元件
+│   ├── Player.tsx         ← 玩家角色
+│   ├── Enemy.tsx          ← 敵人
+│   └── HUD.tsx            ← 分數/HP/計時
+├── public/assets/
+│   └── ${imageName||"player.png"}      ← 玩家上傳的圖片
+├── game-spec.md           ← 本規格書
+└── package.json
+\`\`\`
+
+---
+
+## 六、逐步實作指引
+
+### Step 1：建立專案
+\`\`\`bash
+npx create-next-app@latest ${slug} --typescript --tailwind --app
+cd ${slug}
+${pkgs.join("\n")}
+mkdir -p public/assets
+cp ~/Downloads/${imageName||"player.png"} public/assets/
+\`\`\`
+
+### Step 2：貼給 Codex 或 Claude Code 的完整啟動 Prompt
+
+> 📋 複製以下全部內容，貼入 AI 後直接開始實作：
+
+\`\`\`
+我需要你幫我實作一個完整可玩的「${game.name}」網頁遊戲，標題是「${gameTitle||"我的遊戲"}」。
+
+技術棧：${game.stack||"Next.js 14 + Phaser 3"}
+遊戲路由：/game（src/app/game/page.tsx）
+
+請嚴格按照以下規格書的每一個數值實作，這是設計者與 AI 的共識協議：
+
+操作方式：${game.controls}
+過關條件：${game.win}
+必要功能：${game.features.join("、")}
+圖片套用：${imgPath} → 用作「${game.imageUse||"主角"}」
+所有 UI 使用繁體中文
+在 1280×720 桌機瀏覽器正常遊玩
+${is3D?`使用 React Three Fiber + Rapier 實作真實 3D 物理，參考 ${game.github}`:"使用 Phaser 3 Arcade Physics，Canvas 放在 'use client' 元件中"}
+
+詳細數值規格請見 game-spec.md 第三節。請從 GameCanvas.tsx 開始，先完成可玩的核心版本。
+\`\`\`
+
+### Step 3：本機測試
+\`\`\`bash
+npm run dev
+# 開啟 http://localhost:3000/game 確認遊戲可玩
+\`\`\`
+
+### Step 4：常見問題排除
+| 問題 | 解法 |
+|------|------|
+| 遊戲畫面空白 | 加 \`'use client'\` 在 GameCanvas.tsx 頂部 |
+| 圖片 404 | 確認圖片在 \`public/assets/\`，路徑用 \`/assets/檔名\` |
+| TypeScript 錯誤 | tsconfig.json 加 \`"skipLibCheck": true\` |
+| ${is3D?"Rapier WASM 失敗":"Phaser 找不到 window"} | ${is3D?"確認 @react-three/rapier 版本 ≥ 1.0 且用 R3F v8":"dynamic import: `const Phaser = await import('phaser')`"} |
+| Vercel 部署失敗 | 先跑 \`npm run build\` 確認本機無錯誤 |
+
+---
+
+## 七、部署
+
+\`\`\`bash
+npm run build          # 確認 build 成功
+npx vercel --prod      # 部署（project name: ${slug}）
+\`\`\`
+
+---
+
+## 八、YAML 設定檔（與上方規格完全對應）
+
+> ⚠️ 此 YAML 與上方 Markdown 為**同一份規格的雙重格式**。
+> AI 可以用 Markdown 理解邏輯，用 YAML 讀取精確數值。兩者必須一致。
+
+\`\`\`yaml
+${yamlBlock}
+\`\`\`
+
+---
+> 📌 本規格書由 **網頁遊戲設計工坊** 自動產生 · ${date}
+> 🔗 ${is3D?`GitHub 參考：${game.github}`:"技術棧：Phaser 3 + Next.js 14"}
+> ✅ YAML 與 Markdown 已合併為單一共識文件，AI 與設計者共同遵守
+`;
+}
+
+// buildPrompt 現在直接引用 spec 文件
+function buildPrompt(game, is3D, gameTitle, spec, tool) {
+  const intro = `我需要你幫我實作一個完整可玩的「${game.name}」網頁遊戲，標題是「${gameTitle||"我的遊戲"}」。
+
+技術棧：${game.stack||"Next.js 14 + Phaser 3"}　部署：Vercel
+遊戲路由：/game（src/app/game/page.tsx）
+
+以下是完整規格書（YAML + Markdown 合併版），請嚴格按照所有數值與規則實作：
+
+---
+
+${spec}
+
+---
+`;
   return tool === "claude"
-    ? base + "\n\n請直接開始實作，優先完成可玩版本，再做美化。"
-    : base + "\n\n請逐步實作，先完成核心遊戲邏輯，再加 UI 與美術。";
+    ? intro + "\n請直接開始實作，從 GameCanvas.tsx 核心邏輯開始，完成可玩版本後再美化。"
+    : intro + "\n請逐步實作，先完成核心遊戲邏輯與物理，再加入 HUD 與美術。";
 }
 
 // ── Tiny Card ─────────────────────────────────────────────────────────────────
@@ -493,9 +1164,9 @@ export default function App() {
   const [selected3D, setSelected3D] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadMsg, setLoadMsg] = useState("");
-  const [yaml, setYaml] = useState("");
+  const [spec, setSpec] = useState("");     // 合併後的單一規格書
   const [aiAnalysis, setAiAnalysis] = useState("");
-  const [activeTab, setActiveTab] = useState("yaml");
+  const [activeTab, setActiveTab] = useState("spec");
   const [isDark, setIsDark] = useState(true);
   const fileRef = useRef();
   const geminiKey = process.env.NEXT_PUBLIC_GEMINI_KEY || "";
@@ -546,16 +1217,17 @@ JSON 格式：{"analysis":"3句企劃白話描述","theme":"主題","colors":["�
       if(!analysis) analysis=`「${title}」是一款${is3D?"真實 3D":"網頁"}${selectedGame.name}遊戲。${gameContent.slice(0,50)}。使用 ${selectedGame.stack||"Phaser 3"} 技術，操作方式為「${selectedGame.controls}」，目標是「${selectedGame.win}」。完成部署後即可用瀏覽器直接遊玩！`;
       setLoadMsg("產生遊戲規格 YAML...");
       await new Promise(r=>setTimeout(r,200));
-      setYaml(buildYAML(selectedGame, is3D, title, gameContent, image?.name, ai));
+      const generatedSpec = buildSpec(selectedGame, is3D, title, gameContent, image?.name, ai);
+      setSpec(generatedSpec);
       setAiAnalysis(analysis);
       setPhase("result");
     } finally { setLoading(false); setLoadMsg(""); }
   };
 
-  const downloadYAML = () => {
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(new Blob([yaml],{type:"text/yaml"}));
-    a.download=`${(gameTitle||"game").toLowerCase().replace(/\s+/g,"-")}-game-config.yml`;
+  const downloadSpec = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([spec], { type: "text/markdown" }));
+    a.download = `${(gameTitle||"game").toLowerCase().replace(/\s+/g,"-")}-game-spec.md`;
     a.click();
   };
 
@@ -670,33 +1342,45 @@ JSON 格式：{"analysis":"3句企劃白話描述","theme":"主題","colors":["�
             )}
 
             <div style={{ display:"flex",gap:3,background:isDark?"#080814":"#e8eaff",padding:4,borderRadius:10,border:`1px solid ${border}` }}>
-              {[{id:"yaml",label:"📄 遊戲規格 YAML"},{id:"deploy",label:"🤖 AI 實作 + 部署引導"}].map(({id,label})=>(
-                <button key={id} onClick={()=>setActiveTab(id)} style={{ flex:1,padding:"8px 14px",borderRadius:8,border:"none",background:activeTab===id?selectedGame.color:"transparent",color:activeTab===id?"#fff":sub,cursor:"pointer",fontSize:13,fontWeight:activeTab===id?700:400,fontFamily:"inherit",transition:"all 0.2s" }}>{label}</button>
+              {[{id:"spec",label:"📋 遊戲規格書（YAML + MD 合併）"},{id:"deploy",label:"🤖 AI 實作 + 部署引導"}].map(({id,label})=>(
+                <button key={id} onClick={()=>setActiveTab(id)} style={{ flex:1,padding:"8px 10px",borderRadius:8,border:"none",background:activeTab===id?selectedGame.color:"transparent",color:activeTab===id?"#fff":sub,cursor:"pointer",fontSize:12,fontWeight:activeTab===id?700:400,fontFamily:"inherit",transition:"all 0.2s" }}>{label}</button>
               ))}
             </div>
 
-            {activeTab==="yaml"&&(
+            {activeTab==="spec"&&(
               <div style={{ background:card,border:`1px solid ${border}`,borderRadius:14,overflow:"hidden" }}>
-                <div style={{ padding:"12px 18px",borderBottom:`1px solid ${border}`,display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+                <div style={{ padding:"12px 18px",borderBottom:`1px solid ${border}`,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8 }}>
                   <div>
-                    <span style={{ fontWeight:700,fontSize:13,fontFamily:"'JetBrains Mono',monospace",color:text }}>📄 game-config.yml</span>
-                    <span style={{ marginLeft:10,fontSize:11,color:sub }}>包含完整遊戲規格，直接貼給 Codex / Claude Code 就能實作</span>
+                    <span style={{ fontWeight:700,fontSize:13,fontFamily:"'JetBrains Mono',monospace",color:text }}>📋 game-spec.md</span>
+                    <span style={{ marginLeft:8,fontSize:11,color:sub }}>YAML 設定 + Markdown 說明 = 單一規格書，直接給 AI 就能做出正確遊戲</span>
                   </div>
-                  <button onClick={downloadYAML} style={{ background:selectedGame.color,border:"none",color:"#fff",padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",whiteSpace:"nowrap" }}>⬇ 下載 YML</button>
+                  <div style={{ display:"flex",gap:8 }}>
+                    <button onClick={()=>navigator.clipboard.writeText(spec).catch(()=>{})} style={{ background:isDark?"#1a1a3e":"#e8eaff",border:`1px solid ${border}`,color:isDark?"#a78bfa":"#5555aa",padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontFamily:"inherit" }}>📋 複製全文</button>
+                    <button onClick={downloadSpec} style={{ background:selectedGame.color,border:"none",color:"#fff",padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",whiteSpace:"nowrap" }}>⬇ 下載 .md</button>
+                  </div>
                 </div>
-                <pre style={{ margin:0,padding:16,fontSize:11.5,lineHeight:1.9,overflowX:"auto",fontFamily:"'JetBrains Mono',monospace",background:isDark?"#000":"#1a1a2e",maxHeight:520 }}>
-                  {yaml.split("\n").map((line,i)=>{
-                    let c="#a8e6cf";
-                    if(line.trim().startsWith("#")) c="#3a3a5c";
-                    else if(/^[a-z_]+:/.test(line.trim())) c="#7ec8e3";
-                    else if(line.trim().startsWith("-")) c="#f9c74f";
-                    else if(line.includes('"')) c="#ffd166";
-                    return <div key={i} style={{ color:c }}>{line||" "}</div>;
-                  })}
-                </pre>
+                <div style={{ position:"relative" }}>
+                  <pre style={{ margin:0,padding:16,fontSize:11,lineHeight:1.85,overflowX:"auto",fontFamily:"'JetBrains Mono',monospace",background:isDark?"#000":"#1a1a2e",maxHeight:580,whiteSpace:"pre-wrap",wordBreak:"break-word" }}>
+                    {spec.split("\n").map((line,i)=>{
+                      let c = isDark?"#c9d1d9":"#ccc";
+                      if(line.startsWith("# "))       c="#a78bfa";
+                      else if(line.startsWith("## ")) c="#7ec8e3";
+                      else if(line.startsWith("### "))c="#f9c74f";
+                      else if(line.startsWith("> "))  c="#888";
+                      else if(line.startsWith("- ✅"))c="#a8e6cf";
+                      else if(line.startsWith("- "))  c="#a8e6cf";
+                      else if(line.startsWith("|"))   c="#ffd166";
+                      else if(line.startsWith("```")) c="#ff9a76";
+                      else if(line.startsWith("  #")) c="#3a3a5c";
+                      else if(/^[a-z_]+:/.test(line.trim())) c="#7ec8e3";
+                      return <div key={i} style={{ color:c }}>{line||" "}</div>;
+                    })}
+                  </pre>
+                </div>
               </div>
             )}
-            {activeTab==="deploy"&&<DeployGuide game={selectedGame} is3D={is3D} gameTitle={gameTitle||"我的遊戲"} yaml={yaml} isDark={isDark} />}
+
+            {activeTab==="deploy"&&<DeployGuide game={selectedGame} is3D={is3D} gameTitle={gameTitle||"我的遊戲"} yaml={spec} isDark={isDark} />}
           </div>
         )}
       </div>
