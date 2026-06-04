@@ -19,25 +19,50 @@ const GAMES_2D = [
 // SECTION B：6 種真實 3D 遊戲（React Three Fiber + Rapier 物理引擎）
 // 每個都附真實 GitHub 來源，可直接 Vercel 部署
 // ══════════════════════════════════════════════════════════════════════════════
+// ── 皮克斯視覺風格常數（所有 3D 遊戲共用）────────────────────────────────────
+const PIXAR_STYLE = {
+  badge: "🎬 皮克斯／迪士尼風格",
+  summary: "圓潤 Smooth Mesh · 卡通高質感材質 · 電影級軟陰影",
+  rules: [
+    "角色：圓潤大頭短腳比例，表面如充飽氣的氣球，無硬邊方塊感",
+    "材質：次表面散射（SSS）皮膚、PVC 光澤、絨毛布料質感",
+    "光影：溫暖主光 + 淡藍補光，漸層軟陰影，Fresnel 邊緣發光",
+    "場景：鵝卵石圓石、棒棒糖圓頂樹、蓬鬆草地，所有邊角皆倒角磨圓",
+    "❌ 禁止：Low-poly / Voxel / 積木 / Minecraft / 樂高 任何方塊外觀",
+  ],
+  threeJs: {
+    renderer: "WebGLRenderer({ antialias: true, toneMapping: ACESFilmicToneMapping })",
+    toneMappingExposure: 1.2,
+    shadows: "PCFSoftShadowMap（軟陰影）",
+    lights: [
+      "DirectionalLight #fff8e1 intensity=2.5（溫暖主光）",
+      "HemisphereLight sky=#ffe4b5 ground=#4169e1 intensity=0.8（天空補光）",
+      "AmbientLight #ffeedd intensity=0.4",
+    ],
+    material: "MeshStandardMaterial roughness=0.35 metalness=0.05（卡通柔光質感）",
+    postprocessing: ["Bloom（glow 光暈）", "SSAO（接觸陰影）", "ChromaticAberration（輕微色差）"],
+  },
+};
+
 const GAMES_3D = [
   {
     id: "racing_3d",
     emoji: "🏎️",
     name: "3D 賽車競速",
-    tagline: "像附圖那樣！真實 3D 視角在賽道上高速競速",
-    desc: "有真實物理引擎的第三人稱賽車遊戲，漂移過彎、衝刺直線，挑戰最快圈速。",
+    tagline: "皮克斯風格的玩具賽車！圓滾滾車身在彩色賽道上漂移飛馳",
+    desc: "《汽車總動員》式的卡通賽車遊戲——車身圓潤光滑像充氣玩具，賽道鮮豔如糖果樂園，有真實物理引擎的漂移與碰撞。",
     controls: "WASD / 方向鍵 控制車輛  空白鍵 手煞車漂移",
     win: "完成圈數、最快時間",
     color: "#e74c3c",
     diff: "⭐⭐ 一般",
     diffColor: "#e67e22",
-    features: ["真實車輛物理", "第三人稱視角", "計時系統", "賽道碰撞"],
-    imageUse: "賽車塗裝或車隊 Logo",
+    features: ["真實車輛物理", "皮克斯圓潤車身", "糖果色賽道場景", "電影級軟陰影"],
+    imageUse: "賽車車身貼圖（材質貼圖，貼在圓潤車體上）",
     stack: "React Three Fiber + Rapier 物理引擎",
     github: "https://github.com/pmndrs/racing-game",
     githubNote: "pmndrs 官方出品，CC0 素材，社群共建",
     vercelDeploy: true,
-    install: ["npm install three @react-three/fiber @react-three/drei @react-three/rapier", "npm install zustand leva"],
+    install: ["npm install three @react-three/fiber @react-three/drei @react-three/rapier", "npm install zustand @react-three/postprocessing"],
     preview: "https://racing.pmnd.rs/",
     docs: [
       { label: "🏎 pmndrs/racing-game GitHub", url: "https://github.com/pmndrs/racing-game" },
@@ -49,73 +74,73 @@ const GAMES_3D = [
   {
     id: "fps_3d",
     emoji: "🎯",
-    name: "3D 第一人稱射擊",
-    tagline: "FPS 視角在 3D 場景中移動瞄準射擊",
-    desc: "第一人稱視角射擊遊戲，3D 場景中自由移動，有碰撞偵測、彈道系統、敵人 AI。",
+    name: "3D 卡通射擊",
+    tagline: "像《玩具總動員》裡的玩具大戰！圓潤玩具角色互射泡泡彈",
+    desc: "皮克斯風格的第一人稱卡通射擊——角色是充氣感的玩具士兵，武器射出彩色泡泡彈，場景是圓潤柔軟的玩具房間。",
     controls: "WASD 移動  滑鼠瞄準  左鍵射擊  Space 跳躍",
-    win: "擊倒所有敵人",
+    win: "擊倒所有敵人玩具",
     color: "#c0392b",
     diff: "⭐⭐⭐ 進階",
     diffColor: "#c0392b",
-    features: ["FPS 視角", "3D 碰撞偵測", "彈道物理", "敵人 AI"],
-    imageUse: "玩家頭像或武器貼圖",
-    stack: "Three.js + Solid.js（開源 FPS 框架）",
-    github: "https://github.com/lume/lume",
-    githubNote: "開源 FPS 基礎框架，可分享連結多人遊玩",
+    features: ["FPS 視角", "圓潤玩具角色", "彩色泡泡彈道", "卡通爆炸特效"],
+    imageUse: "玩家頭像（貼在 FPS HUD 或角色臉部）",
+    stack: "React Three Fiber + Rapier + ecctrl",
+    github: "https://github.com/pmndrs/ecctrl",
+    githubNote: "ecctrl 角色控制器，整合 Rapier 物理引擎",
     vercelDeploy: true,
-    install: ["npm install three @react-three/fiber @react-three/drei @react-three/rapier", "npm install ecctrl zustand"],
-    preview: "https://lume.io/",
+    install: ["npm install three @react-three/fiber @react-three/drei @react-three/rapier", "npm install ecctrl zustand @react-three/postprocessing"],
+    preview: "https://github.com/pmndrs/ecctrl",
     docs: [
-      { label: "🎯 lume FPS GitHub", url: "https://github.com/lume/lume" },
       { label: "🕹 ecctrl 角色控制器", url: "https://github.com/pmndrs/ecctrl" },
       { label: "📘 React Three Fiber 文件", url: "https://docs.pmnd.rs/react-three-fiber" },
       { label: "⚡ Rapier 物理引擎", url: "https://rapier.rs/" },
+      { label: "✨ Postprocessing 特效", url: "https://github.com/pmndrs/postprocessing" },
     ],
   },
   {
     id: "marble_3d",
     emoji: "⚽",
     name: "3D 滾球闖關",
-    tagline: "控制球在立體關卡上滾動，不掉落就能過關",
-    desc: "類似 Super Monkey Ball，控制一顆球在懸空平台上滾動前進，掉落就重來，到達終點過關。",
+    tagline: "像《怪獸電力公司》裡的彩色毛球！在圓潤糖果平台上滾動冒險",
+    desc: "皮克斯風格的滾球遊戲——球體表面是你上傳的照片，平台像是巨大的棉花糖積木（圓角無硬邊），背景是夢幻雲朵天空。",
     controls: "WASD / 方向鍵 控制滾動方向",
-    win: "球滾到終點平台",
+    win: "球安全滾到終點平台",
     color: "#9b59b6",
     diff: "⭐ 新手",
     diffColor: "#27ae60",
-    features: ["真實滾球物理", "懸空平台", "多關卡", "重力感應"],
-    imageUse: "球的貼圖外觀（用你的照片貼在球上！）",
-    stack: "React Three Fiber + Rapier + Zustand",
+    features: ["真實滾球物理", "照片貼球體表面", "圓潤糖果平台", "夢幻雲朵場景"],
+    imageUse: "球體表面貼圖（你的照片會包覆在圓球上，像個人化玩具球！）",
+    stack: "React Three Fiber + Rapier + Drei",
     github: "https://github.com/pmndrs/react-three-rapier",
-    githubNote: "pmndrs 出品 Rapier 物理套件，官方含 marble race 範例",
+    githubNote: "pmndrs 出品 Rapier 物理套件，含 marble race 範例",
     vercelDeploy: true,
-    install: ["npm install three @react-three/fiber @react-three/drei", "npm install @react-three/rapier zustand"],
+    install: ["npm install three @react-three/fiber @react-three/drei", "npm install @react-three/rapier zustand @react-three/postprocessing"],
     preview: "https://github.com/pmndrs/react-three-rapier",
     docs: [
       { label: "⚽ react-three-rapier GitHub", url: "https://github.com/pmndrs/react-three-rapier" },
       { label: "📘 Rapier 物理引擎", url: "https://rapier.rs/" },
-      { label: "🎮 Marble Race 範例", url: "https://github.com/topics/r3f?o=asc&s=stars" },
       { label: "🌐 Drei 輔助元件", url: "https://github.com/pmndrs/drei" },
+      { label: "✨ Postprocessing 特效", url: "https://github.com/pmndrs/postprocessing" },
     ],
   },
   {
     id: "platformer_3d",
     emoji: "🗺️",
-    name: "3D 立體冒險",
-    tagline: "在真實立體世界中跑跳探索，有物理碰撞的 3D 關卡",
-    desc: "類似低多邊形風格的 3D 平台冒險，在立體場景中跑跳、收集物品、到達終點。有角色動畫與完整物理引擎。",
+    name: "3D 卡通冒險",
+    tagline: "像《超人特攻隊》裡的角色！在圓潤彩色世界裡跑跳收集寶物",
+    desc: "皮克斯風格的 3D 跑跳冒險——主角是大眼圓潤的卡通人物，場景是彩色鮮豔的糖果世界，每個物件都有果凍般的彈性感。",
     controls: "WASD 移動  Space 跳躍  Shift 衝刺",
-    win: "收集所有物品並到達終點",
+    win: "收集所有閃亮寶物並到達終點",
     color: "#27ae60",
     diff: "⭐⭐ 一般",
     diffColor: "#e67e22",
-    features: ["3D 角色控制", "跳躍物理", "低多邊形美術", "收集系統"],
-    imageUse: "角色貼圖或場景主題色",
-    stack: "React Three Fiber + ecctrl 角色控制器 + Rapier",
+    features: ["圓潤卡通角色", "彈性果凍物理", "鮮豔糖果場景", "收集系統"],
+    imageUse: "角色臉部貼圖（貼在圓潤卡通人物的臉上）",
+    stack: "React Three Fiber + ecctrl + Rapier",
     github: "https://github.com/pmndrs/ecctrl",
     githubNote: "pmndrs 出品角色控制器，直接整合物理引擎",
     vercelDeploy: true,
-    install: ["npm install three @react-three/fiber @react-three/drei", "npm install ecctrl @react-three/rapier zustand"],
+    install: ["npm install three @react-three/fiber @react-three/drei", "npm install ecctrl @react-three/rapier zustand @react-three/postprocessing"],
     preview: "https://github.com/pmndrs/ecctrl",
     docs: [
       { label: "🗺 ecctrl 角色控制器", url: "https://github.com/pmndrs/ecctrl" },
@@ -127,21 +152,21 @@ const GAMES_3D = [
   {
     id: "dungeon_3d",
     emoji: "🏯",
-    name: "3D 地城冒險 RPG",
-    tagline: "第三人稱在 3D 地城中探索、打怪、找寶藏",
-    desc: "低多邊形風格的 3D 地城，第三人稱視角操控角色探索迷宮般的地城，與怪物戰鬥，找到出口進入下一層。",
+    name: "3D 卡通地城冒險",
+    tagline: "像《勇敢傳說》的魔法城堡！可愛圓潤角色在夢幻地城打怪找寶藏",
+    desc: "皮克斯風格的地城 RPG——城堡牆壁是圓弧石磚，怪物是毛茸茸或橡皮質感的可愛生物，魔法特效如彩色光球漂浮。",
     controls: "WASD 移動  Space 跳躍  左鍵 攻擊",
-    win: "打敗關主並找到出口",
+    win: "打敗關主可愛怪物並找到出口",
     color: "#8e44ad",
     diff: "⭐⭐⭐ 進階",
     diffColor: "#c0392b",
-    features: ["3D 地城生成", "戰鬥系統", "怪物 AI", "NPC 互動"],
-    imageUse: "主角角色貼圖或怪物外觀",
-    stack: "React Three Fiber + Yuka AI + Rapier",
+    features: ["皮克斯可愛怪物", "魔法彩球特效", "圓弧石磚地城", "NPC 互動對話"],
+    imageUse: "主角角色臉部貼圖（大眼圓潤的卡通人物）",
+    stack: "React Three Fiber + Yuka NPC AI + Rapier",
     github: "https://github.com/ssethsara/react-three-npc",
     githubNote: "Yuka.js NPC AI 系統，整合 R3F 角色尋路",
     vercelDeploy: true,
-    install: ["npm install three @react-three/fiber @react-three/drei", "npm install @ssethsara/react-three-npc ecctrl @react-three/rapier"],
+    install: ["npm install three @react-three/fiber @react-three/drei", "npm install ecctrl @react-three/rapier zustand @react-three/postprocessing"],
     preview: "https://github.com/ssethsara/react-three-npc",
     docs: [
       { label: "🏯 react-three-npc GitHub", url: "https://github.com/ssethsara/react-three-npc" },
@@ -153,19 +178,19 @@ const GAMES_3D = [
   {
     id: "spaceshooter_3d",
     emoji: "🚀",
-    name: "3D 太空射擊",
-    tagline: "在太空中駕駛飛船，閃躲隕石、擊落敵艦",
-    desc: "3D 太空環境，玩家駕駛太空船自由飛行，擊落敵方飛船與隕石群，關卡越深越難。視覺效果華麗。",
+    name: "3D 卡通太空冒險",
+    tagline: "像《星際大戰》卡通版！圓潤玩具飛船在夢幻星空中閃避隕石射擊",
+    desc: "皮克斯風格的太空射擊——飛船造型圓潤如玩具，隕石是圓滾滾的石頭球，爆炸是彩色泡泡煙火，星空背景夢幻絢麗。",
     controls: "WASD 飛行方向  滑鼠瞄準  左鍵射擊",
-    win: "擊敗所有波次敵艦",
+    win: "擊敗所有波次可愛敵艦",
     color: "#2980b9",
     diff: "⭐⭐ 一般",
     diffColor: "#e67e22",
-    features: ["3D 飛行物理", "粒子爆炸特效", "敵艦波次", "武器升級"],
-    imageUse: "飛船外觀貼圖或陣營標誌",
-    stack: "React Three Fiber + Drei + Zustand",
+    features: ["圓潤玩具飛船", "彩色泡泡爆炸", "夢幻星雲場景", "Bloom 光暈特效"],
+    imageUse: "飛船機身貼圖（貼在圓潤玩具飛船的機身上）",
+    stack: "React Three Fiber + Drei + Postprocessing",
     github: "https://github.com/pmndrs/react-three-fiber",
-    githubNote: "R3F 官方生態，豐富太空場景元件",
+    githubNote: "R3F 官方生態，豐富太空場景元件與特效",
     vercelDeploy: true,
     install: ["npm install three @react-three/fiber @react-three/drei", "npm install zustand @react-three/postprocessing"],
     preview: "https://docs.pmnd.rs/react-three-fiber",
@@ -788,6 +813,24 @@ const shipTexture = useTexture('${imgPath}')
     `  no_external_assets: true`,
     `  ${is3D ? `use_real_physics: true` : `use_phaser3: true`}`,
     `  ${is3D ? `github_reference: "${game.github||""}"` : `canvas_in_client_component: true`}`,
+    ...(is3D ? [
+    ``,
+    `pixar_style_contract:`,
+    `  # 🎬 皮克斯／迪士尼動畫風格 — 嚴格執行，不得使用任何方塊或低多邊形`,
+    `  style: "Pixar / Disney Smooth 3D"`,
+    `  forbidden: ["Low-poly", "Voxel", "Minecraft", "Lego", "積木", "方塊", "低多邊形"]`,
+    `  character_style: "圓潤大頭短腳，表面如充氣氣球，無任何硬邊"`,
+    `  material: "MeshStandardMaterial roughness=0.35 metalness=0.05（卡通柔光）"`,
+    `  sss_skin: true  # 次表面散射，讓皮膚/橡皮質感透光`,
+    `  renderer: "WebGLRenderer antialias=true ACESFilmicToneMapping exposure=1.2"`,
+    `  shadows: "PCFSoftShadowMap（電影級軟陰影，不得用硬邊陰影）"`,
+    `  lights:`,
+    `    key_light: "DirectionalLight #fff8e1 intensity=2.5（溫暖主光）"`,
+    `    fill_light: "HemisphereLight sky=#ffe4b5 ground=#4169e1 intensity=0.8"`,
+    `    ambient: "AmbientLight #ffeedd intensity=0.4"`,
+    `  postprocessing: ["Bloom（光暈）", "SSAO（接觸陰影）"]`,
+    `  scene_style: "鵝卵石圓石、棒棒糖圓頂樹、蓬鬆草地，所有邊角皆倒角磨圓"`,
+    ] : []),
   ].join("\n");
 
   // ── 組合完整 Markdown 規格書 ──────────────────────────────────────────────
@@ -865,6 +908,99 @@ ${spec.md_detail}
 | 6 | **Client Component** | Phaser / R3F Canvas 必須在 \`'use client'\` 元件中 |
 | ${is3D?"7":"7"} | **${is3D?"真實 3D 物理":"Phaser 3 實作"}** | ${is3D?`必須使用 @react-three/rapier，不能用 CSS 3D 變形偽裝`:`必須使用 Phaser 3 的 Physics.Arcade 系統`} |
 | 8 | **Vercel 部署就緒** | \`npm run build\` 必須成功，無 TypeScript 錯誤 |
+${is3D ? `| 9 | **🎬 皮克斯視覺風格** | 所有角色、場景、物件必須符合 Pixar/Disney Smooth 3D 風格 |
+| 10 | **❌ 禁止方塊外觀** | 絕對不得出現 Low-poly、Voxel、積木、Minecraft、樂高、低多邊形任何幾何風格 |
+| 11 | **圓潤 Smooth Mesh** | 所有模型必須經過 Subdivision 處理，邊角倒角磨圓，無硬邊 |
+| 12 | **電影級光影** | 必須使用 PCFSoftShadowMap 軟陰影 + ACESFilmic 色調映射 |` : ""}
+
+${is3D ? `
+---
+
+## 四之一、皮克斯風格技術規格
+
+> 🎬 **這是本遊戲最重要的視覺規範，AI 必須在開始寫任何程式碼之前先看完這一節。**
+
+### 視覺方向
+想像《玩具總動員》裡巴斯光年的太空衣光澤、《怪獸電力公司》毛茸茸的質感、《海底總動員》水中柔光——**每個物件都像是真的從工廠製作的玩具，摸起來有溫度、有重量。**
+
+### 禁止清單（AI 不得使用以下任何風格）
+| ❌ 禁止 | ✅ 替代 |
+|---------|---------|
+| Low-poly 低多邊形 | Smooth Mesh + Subdivision |
+| Voxel 體素 / Minecraft 方塊 | 圓潤有機造型 |
+| 樂高 / 積木感 | 充氣氣球般的圓潤邊角 |
+| 硬邊 Flat Shading | Smooth Shading + 倒角 |
+| 卡通輪廓線（Toon Outline）| 改用光影製造立體感 |
+
+### Three.js 渲染器設定（必須完全複製）
+\`\`\`typescript
+// renderer 設定
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap   // 軟陰影
+renderer.toneMapping = THREE.ACESFilmicToneMapping  // 電影色調
+renderer.toneMappingExposure = 1.2
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+// 或在 R3F 中
+<Canvas shadows={{ type: THREE.PCFSoftShadowMap }}
+        gl={{ toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}>
+\`\`\`
+
+### 光源設定（必須完全複製）
+\`\`\`typescript
+// 溫暖主光（模擬皮克斯工作室燈）
+<directionalLight
+  position={[10, 15, 8]}
+  intensity={2.5}
+  color="#fff8e1"
+  castShadow
+  shadow-mapSize={[2048, 2048]}
+  shadow-camera-far={50}
+  shadow-radius={8}           // 陰影柔化半徑
+/>
+
+// 天空補光（冷暖對比，製造立體感）
+<hemisphereLight skyColor="#ffe4b5" groundColor="#4169e1" intensity={0.8} />
+
+// 環境光（避免全黑死角）
+<ambientLight color="#ffeedd" intensity={0.4} />
+\`\`\`
+
+### 材質設定（所有物件使用）
+\`\`\`typescript
+// 標準卡通質感材質
+<meshStandardMaterial
+  roughness={0.35}      // 輕微粗糙，不全亮也不全霧
+  metalness={0.05}      // 幾乎無金屬感（除非是金屬零件）
+  envMapIntensity={0.6} // 輕微環境反射
+/>
+
+// 皮膚 / 橡皮質感（SSS 模擬）
+<meshStandardMaterial
+  roughness={0.5}
+  metalness={0}
+  color="#ffcba4"        // 膚色底色
+  // 用 subsurfaceColor 近似 SSS
+/>
+\`\`\`
+
+### Postprocessing（視覺加工）
+\`\`\`typescript
+import { EffectComposer, Bloom, SSAO } from '@react-three/postprocessing'
+
+<EffectComposer>
+  <Bloom luminanceThreshold={0.9} intensity={0.4} />  {/* 光暈 */}
+  <SSAO radius={0.05} intensity={20} />               {/* 接觸陰影 */}
+</EffectComposer>
+\`\`\`
+
+### 角色造型規範
+- **頭身比：** 1:1.5（大頭矮身，皮克斯標準比例）
+- **眼睛：** 佔臉部 35% 以上，圓形或橢圓形，有高光反射點
+- **四肢：** 短而圓，手腳末端膨脹（像充氣手套）
+- **表面細分：** 所有幾何體最少 Subdivision Level 2
+- **邊角：** 所有邊角 Bevel Radius ≥ 0.1（無任何 90° 硬邊）
+` : ""}
 
 ---
 
@@ -1028,6 +1164,7 @@ function GameCard3D({ g, selected, onSelect, isDark }) {
               <div style={{ display:"flex",alignItems:"center",gap:6,marginTop:3 }}>
                 <div style={{ fontSize:9,padding:"2px 8px",borderRadius:8,background:`${g.diffColor}22`,color:g.diffColor,border:`1px solid ${g.diffColor}44` }}>{g.diff}</div>
                 <div style={{ fontSize:9,padding:"2px 8px",borderRadius:8,background:"#4f46e522",color:"#818cf8",border:"1px solid #4f46e544" }}>真實 3D</div>
+                <div style={{ fontSize:9,padding:"2px 8px",borderRadius:8,background:"#e74c3c18",color:"#ff8fa3",border:"1px solid #e74c3c33" }}>🎬 皮克斯風格</div>
               </div>
             </div>
           </div>
@@ -1298,9 +1435,9 @@ JSON 格式：{"analysis":"3句企劃白話描述","theme":"主題","colors":["�
 
             {/* ── SECTION B：真實 3D 遊戲 ── */}
             <SectionDivider
-              label="真實 3D 遊戲"
-              sublabel="React Three Fiber + Rapier 物理引擎 · GitHub 開源套件 · 可 Vercel 部署"
-              icon="🌐"
+              label="真實 3D 遊戲（皮克斯風格）"
+              sublabel="React Three Fiber + Rapier 物理 · Smooth Mesh · 電影級軟陰影 · 禁止 Low-poly / Voxel / 積木"
+              icon="🎬"
               color="#e74c3c"
             />
             <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12 }}>
