@@ -1446,7 +1446,194 @@ JSON 格式：{"analysis":"3句企劃白話描述","theme":"主題","colors":["�
               ))}
             </div>
 
-            {/* 產出按鈕 */}
+            {/* ── SECTION C：成果報告 ── */}
+            <SectionDivider
+              label="學員成果報告"
+              sublabel="已部署上線的真實遊戲作品 · 點擊連結直接試玩"
+              icon="🏆"
+              color="#f39c12"
+            />
+
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(420px, 1fr))", gap:16 }}>
+              {[
+                {
+                  url: "https://pixar-racing.vercel.app/",
+                  title: "🏎️ Pixar Racing",
+                  type: "3D 賽車競速",
+                  platform: "Vercel",
+                  platformColor: "#0070f3",
+                  desc: "皮克斯風格 3D 賽車遊戲，第三人稱視角在賽道上漂移競速。支援 W/↑ 油門、S/↓ 煞車、A/D 轉向、空白鍵手煞車漂移，還有圈速計時與排檔系統。",
+                  badge: "🎬 皮克斯風格",
+                  badgeColor: "#e74c3c",
+                  controls: "W/↑ 油門　S/↓ 煞車　A/D 轉向　SPC 手煞車　C 視角　R 重置",
+                  tags: ["React Three Fiber", "Rapier 物理引擎", "賽車競速", "3D"],
+                  screenshot: "🏎️",
+                  screenshotBg: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+                },
+                {
+                  url: "https://birthsnake-e85ib6sz.manus.space",
+                  title: "🐍 Birthday Party Snake",
+                  type: "貪吃蛇進化版",
+                  platform: "Manus",
+                  platformColor: "#7c3aed",
+                  desc: "生日派對主題的貪吃蛇遊戲，吃蛋糕、禮物、愛心長大，搭配繽紛的派對視覺效果與音效，適合生日場合分享。",
+                  badge: "🎂 生日派對主題",
+                  badgeColor: "#e67e22",
+                  controls: "方向鍵 / WASD 控制蛇的移動方向",
+                  tags: ["貪吃蛇", "生日派對", "Manus 部署", "網頁遊戲"],
+                  screenshot: "🎂",
+                  screenshotBg: "linear-gradient(135deg, #2d1b69 0%, #11998e 100%)",
+                },
+                {
+                  url: "https://v0-birthday-party-snake-game.vercel.app/",
+                  title: "🎂 Birthday Snake（v0 版）",
+                  type: "貪吃蛇 v0 版",
+                  platform: "Vercel",
+                  platformColor: "#0070f3",
+                  desc: "由 v0.app 生成的生日派對貪吃蛇，食物為 🎂+50分、🎁+30分、❤️+10分，畫面色彩鮮豔，支援行動裝置觸控，適合派對場合。",
+                  badge: "🎉 v0.app 生成",
+                  badgeColor: "#10a37f",
+                  controls: "滑鼠點擊「🎉 Start Party!」後用方向鍵操控",
+                  tags: ["v0.app", "貪吃蛇", "生日主題", "Vercel"],
+                  screenshot: "🎉",
+                  screenshotBg: "linear-gradient(135deg, #e0f2fe 0%, #fce4ec 100%)",
+                },
+                {
+                  url: "https://node-js-20-vercel-cli-npm.vercel.app",
+                  title: "🚀 射面包",
+                  type: "3D 太空射擊",
+                  platform: "Vercel",
+                  platformColor: "#0070f3",
+                  desc: "皮克斯風格的 3D 太空射擊遊戲！駕駛飛船在卡通宇宙裡擊落漂浮的麵包與甜甜圈艦隊，共 5 波敵人，第 5 波出現旗艦。",
+                  badge: "🎬 皮克斯風格",
+                  badgeColor: "#e74c3c",
+                  controls: "WASD 飛行　滑鼠瞄準　左鍵連射　前往 /game 進入遊戲",
+                  tags: ["React Three Fiber", "Rapier", "Bloom 特效", "3D 射擊"],
+                  screenshot: "🌌",
+                  screenshotBg: "linear-gradient(135deg, #060612 0%, #0a0a2e 50%, #1a0a3e 100%)",
+                },
+              ].map((game) => (
+                <div key={game.url} style={{
+                  background: card,
+                  border: `1px solid ${border}`,
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  transition: "all 0.3s",
+                }}>
+                  {/* 截圖預覽區 */}
+                  <div style={{
+                    background: game.screenshotBg,
+                    height: 120,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                    fontSize: 56,
+                  }}>
+                    {game.screenshot}
+                    {/* 平台 badge */}
+                    <div style={{
+                      position: "absolute",
+                      top: 10,
+                      right: 10,
+                      background: game.platformColor,
+                      color: "#fff",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "3px 10px",
+                      borderRadius: 20,
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}>
+                      ▲ {game.platform}
+                    </div>
+                    {/* 類型 badge */}
+                    <div style={{
+                      position: "absolute",
+                      top: 10,
+                      left: 10,
+                      background: game.badgeColor + "dd",
+                      color: "#fff",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "3px 8px",
+                      borderRadius: 20,
+                    }}>
+                      {game.badge}
+                    </div>
+                  </div>
+
+                  {/* 內容 */}
+                  <div style={{ padding: "14px 16px" }}>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom: 8 }}>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 15, color: text }}>{game.title}</div>
+                        <div style={{ fontSize: 11, color: sub, marginTop: 2 }}>{game.type}</div>
+                      </div>
+                    </div>
+
+                    <p style={{ fontSize: 12, color: isDark?"#aaa":"#555", lineHeight: 1.6, margin: "0 0 10px" }}>
+                      {game.desc}
+                    </p>
+
+                    {/* 操作說明 */}
+                    <div style={{
+                      background: isDark?"#080814":"#f5f6ff",
+                      border: `1px solid ${border}`,
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                      marginBottom: 12,
+                    }}>
+                      <div style={{ fontSize: 10, color: sub, marginBottom: 3, fontFamily:"'JetBrains Mono',monospace" }}>🎮 操作方式</div>
+                      <div style={{ fontSize: 11, color: isDark?"#ccc":"#444" }}>{game.controls}</div>
+                    </div>
+
+                    {/* Tags */}
+                    <div style={{ display:"flex", flexWrap:"wrap", gap: 5, marginBottom: 12 }}>
+                      {game.tags.map(t => (
+                        <span key={t} style={{
+                          fontSize: 10,
+                          padding: "2px 8px",
+                          borderRadius: 10,
+                          background: isDark?"#1a1a3e":"#e8eaff",
+                          color: isDark?"#818cf8":"#4f46e5",
+                          border: `1px solid ${isDark?"#2a2a5e":"#c7d2fe"}`,
+                        }}>{t}</span>
+                      ))}
+                    </div>
+
+                    {/* CTA 按鈕 */}
+                    <a
+                      href={game.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 8,
+                        width: "100%",
+                        padding: "10px 0",
+                        background: `linear-gradient(135deg, #4f46e5, #7c3aed)`,
+                        border: "none",
+                        borderRadius: 10,
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        textDecoration: "none",
+                        cursor: "pointer",
+                        boxSizing: "border-box",
+                        transition: "opacity 0.2s",
+                      }}
+                    >
+                      🎮 立即試玩
+                      <span style={{ fontSize: 10, opacity: 0.8, fontFamily:"'JetBrains Mono',monospace" }}>
+                        {game.url.replace("https://","").split("/")[0]}
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
             <button onClick={handleGenerate} disabled={loading||!selectedGame||!gameContent.trim()} style={{
               width:"100%",padding:"14px 24px",border:"none",borderRadius:12,
               background:loading||!selectedGame||!gameContent.trim()?(isDark?"#13132a":"#e8eaff"):"linear-gradient(135deg,#4f46e5,#7c3aed)",
