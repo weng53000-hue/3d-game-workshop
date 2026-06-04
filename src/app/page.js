@@ -511,14 +511,25 @@ function DeployGuide({ template, gameTitle }) {
 }
 
 // ── Template Card ─────────────────────────────────────────────────────────────
-function TemplateCard({ t, selected, onSelect }) {
+function TemplateCard({ t, selected, onSelect, isDark }) {
   const [expanded, setExpanded] = useState(false);
+  const cardBg   = selected ? `${t.color}14` : (isDark ? "#0e0e20" : "#ffffff");
+  const cardBorder = selected ? t.color : (isDark ? "#1a1a3e" : "#d4d8f0");
+  const titleColor = selected ? t.color : (isDark ? "#fff" : "#1a1a3e");
+  const descColor  = isDark ? "#ccc" : "#444";
+  const taglineColor = isDark ? "#a0a0c0" : "#6666aa";
+  const metaColor  = isDark ? "#777" : "#888";
+  const feelColor  = isDark ? "#555" : "#999";
+  const docBg      = isDark ? "#080814" : "#f5f6ff";
+  const docText    = isDark ? "#ccc" : "#333";
+  const stackColor = isDark ? "#555" : "#999";
+
   return (
     <div style={{
-      background: selected ? `${t.color}14` : "#0e0e20",
-      border: `2px solid ${selected ? t.color : "#1a1a3e"}`,
+      background: cardBg,
+      border: `2px solid ${cardBorder}`,
       borderRadius: 16, padding: 18, cursor: "pointer",
-      transition: "all 0.2s", position: "relative",
+      transition: "all 0.3s", position: "relative",
     }}>
       {selected && (
         <div style={{
@@ -533,7 +544,7 @@ function TemplateCard({ t, selected, onSelect }) {
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
           <span style={{ fontSize: 32 }}>{t.emoji}</span>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 15, color: selected ? t.color : "#fff" }}>{t.name}</div>
+            <div style={{ fontWeight: 800, fontSize: 15, color: titleColor }}>{t.name}</div>
             <div style={{
               fontSize: 10, padding: "2px 8px", borderRadius: 10, display: "inline-block", marginTop: 3,
               background: `${t.diffColor}22`, color: t.diffColor, border: `1px solid ${t.diffColor}44`,
@@ -541,13 +552,13 @@ function TemplateCard({ t, selected, onSelect }) {
           </div>
         </div>
 
-        <div style={{ fontSize: 12, color: "#a0a0c0", lineHeight: 1.6, marginBottom: 10, fontStyle: "italic" }}>
+        <div style={{ fontSize: 12, color: taglineColor, lineHeight: 1.6, marginBottom: 10, fontStyle: "italic" }}>
           「{t.tagline}」
         </div>
-        <div style={{ fontSize: 13, color: "#ccc", lineHeight: 1.6, marginBottom: 12 }}>{t.plain}</div>
+        <div style={{ fontSize: 13, color: descColor, lineHeight: 1.6, marginBottom: 12 }}>{t.plain}</div>
 
-        <div style={{ fontSize: 12, color: "#777", marginBottom: 4 }}>👤 {t.whoFor}</div>
-        <div style={{ fontSize: 12, color: "#555" }}>{t.feel}</div>
+        <div style={{ fontSize: 12, color: metaColor, marginBottom: 4 }}>👤 {t.whoFor}</div>
+        <div style={{ fontSize: 12, color: feelColor }}>{t.feel}</div>
       </div>
 
       {/* 展開技術文件 */}
@@ -565,15 +576,15 @@ function TemplateCard({ t, selected, onSelect }) {
 
       {expanded && (
         <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ fontSize: 11, color: "#555", marginBottom: 4, fontFamily: "'JetBrains Mono', monospace" }}>
+          <div style={{ fontSize: 11, color: stackColor, marginBottom: 4, fontFamily: "'JetBrains Mono', monospace" }}>
             技術棧：{t.stack} · 部署：{t.deploy}
           </div>
           {t.docs.map(({ label, url }) => (
             <a key={url} href={url} target="_blank" rel="noopener noreferrer" style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "8px 12px", background: "#080814",
+              padding: "8px 12px", background: docBg,
               border: `1px solid ${t.color}33`, borderRadius: 8,
-              color: "#ccc", textDecoration: "none", fontSize: 13,
+              color: docText, textDecoration: "none", fontSize: 13,
               transition: "all 0.15s",
             }}>
               <span>{label}</span>
@@ -599,6 +610,7 @@ export default function App() {
   const [gameTitle, setGameTitle] = useState("");
   const geminiKey = process.env.NEXT_PUBLIC_GEMINI_KEY || "";
   const [activeTab, setActiveTab] = useState("yaml");
+  const [isDark, setIsDark] = useState(true);
   const fileRef = useRef();
 
   const handleImage = (e) => {
@@ -647,27 +659,63 @@ export default function App() {
     a.click();
   };
 
-  const bg = "#060612";
-  const card = "#0e0e20";
-  const border = "#1a1a3e";
+  // ── Theme ──────────────────────────────────────────────────────────────────
+  const bg      = isDark ? "#060612"  : "#f0f2ff";
+  const card    = isDark ? "#0e0e20"  : "#ffffff";
+  const border  = isDark ? "#1a1a3e"  : "#d4d8f0";
+  const text    = isDark ? "#e2e8f0"  : "#1a1a3e";
+  const subtext = isDark ? "#6b7280"  : "#5a5f80";
+  const gridLine= isDark ? "#1a1a3e0d": "#6b7aff0d";
+  const glowBg  = isDark ? "#4f46e51a": "#4f46e50d";
 
   return (
-    <div style={{ minHeight: "100vh", background: bg, color: "#e2e8f0", fontFamily: "'Syne', system-ui, sans-serif", position: "relative" }}>
+    <div style={{ minHeight: "100vh", background: bg, color: text, fontFamily: "'Syne', system-ui, sans-serif", position: "relative", transition: "background 0.3s, color 0.3s" }}>
       {/* Grid bg */}
-      <div style={{ position: "fixed", inset: 0, backgroundImage: "linear-gradient(#1a1a3e0d 1px, transparent 1px), linear-gradient(90deg, #1a1a3e0d 1px, transparent 1px)", backgroundSize: "40px 40px", pointerEvents: "none", zIndex: 0 }} />
-      <div style={{ position: "fixed", top: -200, left: "50%", transform: "translateX(-50%)", width: 700, height: 400, background: "radial-gradient(ellipse, #4f46e51a 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+      <div style={{ position: "fixed", inset: 0, backgroundImage: `linear-gradient(${gridLine} 1px, transparent 1px), linear-gradient(90deg, ${gridLine} 1px, transparent 1px)`, backgroundSize: "40px 40px", pointerEvents: "none", zIndex: 0 }} />
+      <div style={{ position: "fixed", top: -200, left: "50%", transform: "translateX(-50%)", width: 700, height: 400, background: `radial-gradient(ellipse, ${glowBg} 0%, transparent 70%)`, pointerEvents: "none", zIndex: 0 }} />
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 920, margin: "0 auto", padding: "40px 20px" }}>
 
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <div style={{ textAlign: "center", marginBottom: 40, position: "relative" }}>
+
+          {/* 🌙 / ☀️ Toggle */}
+          <button
+            onClick={() => setIsDark(!isDark)}
+            title={isDark ? "切換亮色模式" : "切換暗色模式"}
+            style={{
+              position: "absolute", top: 0, right: 0,
+              width: 48, height: 28,
+              background: isDark ? "#1a1a3e" : "#e0e4ff",
+              border: `2px solid ${isDark ? "#3a3a6e" : "#b0b8f0"}`,
+              borderRadius: 999,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              padding: "0 4px",
+              transition: "all 0.3s",
+            }}
+          >
+            <div style={{
+              width: 18, height: 18,
+              borderRadius: "50%",
+              background: isDark ? "#4f46e5" : "#f59e0b",
+              transform: isDark ? "translateX(0px)" : "translateX(18px)",
+              transition: "transform 0.3s, background 0.3s",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 11,
+            }}>
+              {isDark ? "🌙" : "☀️"}
+            </div>
+          </button>
+
           <div style={{ display: "inline-block", background: "linear-gradient(135deg, #4f46e5, #7c3aed)", borderRadius: 10, padding: "5px 14px", fontSize: 10, letterSpacing: 3, fontWeight: 700, color: "#c4b5fd", marginBottom: 14, fontFamily: "'JetBrains Mono', monospace" }}>
             ◈ GEMINI × 3D GAME GENERATOR
           </div>
           <h1 style={{ fontSize: "clamp(26px, 5vw, 42px)", fontWeight: 900, margin: "0 0 10px", background: "linear-gradient(135deg, #fff 0%, #a78bfa 50%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: -1 }}>
             3D 遊戲設計工坊
           </h1>
-          <p style={{ color: "#6b7280", fontSize: 14, margin: 0 }}>上傳圖片 → 描述遊戲 → 選擇模板 → 產出設定 → 逐步部署</p>
+          <p style={{ color: subtext, fontSize: 14, margin: 0 }}>上傳圖片 → 描述遊戲 → 選擇模板 → 產出設定 → 逐步部署</p>
         </div>
 
         {phase === "input" ? (
@@ -675,42 +723,42 @@ export default function App() {
 
             {/* Upload + Content */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 18 }}>
-              <div onClick={() => fileRef.current.click()} style={{ background: card, border: `2px dashed ${image ? "#4f46e5" : border}`, borderRadius: 14, padding: 20, cursor: "pointer", textAlign: "center", minHeight: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <div onClick={() => fileRef.current.click()} style={{ background: card, border: `2px dashed ${image ? "#4f46e5" : border}`, borderRadius: 14, padding: 20, cursor: "pointer", textAlign: "center", minHeight: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, transition: "background 0.3s" }}>
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} style={{ display: "none" }} />
                 {image ? (
                   <>
                     <img src={image.url} alt="upload" style={{ width: "100%", maxHeight: 110, objectFit: "cover", borderRadius: 8 }} />
                     <div style={{ fontSize: 11, color: "#4f46e5", fontWeight: 600 }}>✓ {image.name}</div>
-                    <div style={{ fontSize: 10, color: "#444" }}>點擊重新上傳</div>
+                    <div style={{ fontSize: 10, color: subtext }}>點擊重新上傳</div>
                   </>
                 ) : (
                   <>
                     <div style={{ fontSize: 36 }}>🖼️</div>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>上傳遊戲圖片</div>
-                    <div style={{ fontSize: 11, color: "#555", lineHeight: 1.5 }}>主角、場景、LOGO<br />JPG / PNG / WebP</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: text }}>上傳遊戲圖片</div>
+                    <div style={{ fontSize: 11, color: subtext, lineHeight: 1.5 }}>主角、場景、LOGO<br />JPG / PNG / WebP</div>
                   </>
                 )}
               </div>
-              <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 14, padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 14, padding: 18, display: "flex", flexDirection: "column", gap: 12, transition: "background 0.3s" }}>
                 <div>
-                  <label style={{ fontSize: 11, color: "#666", display: "block", marginBottom: 5 }}>遊戲標題</label>
-                  <input value={gameTitle} onChange={(e) => setGameTitle(e.target.value)} placeholder="例：星際守護者 / 魔法學院" style={{ width: "100%", background: "#080814", border: `1px solid ${border}`, borderRadius: 8, padding: "9px 12px", color: "#e2e8f0", fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} />
+                  <label style={{ fontSize: 11, color: subtext, display: "block", marginBottom: 5 }}>遊戲標題</label>
+                  <input value={gameTitle} onChange={(e) => setGameTitle(e.target.value)} placeholder="例：星際守護者 / 魔法學院" style={{ width: "100%", background: isDark ? "#080814" : "#f5f6ff", border: `1px solid ${border}`, borderRadius: 8, padding: "9px 12px", color: text, fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "inherit", transition: "background 0.3s, color 0.3s" }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 11, color: "#666", display: "block", marginBottom: 5 }}>遊戲內容描述</label>
-                  <textarea value={gameContent} onChange={(e) => setGameContent(e.target.value)} placeholder="描述你想做的遊戲：主題、玩法、角色、故事...&#10;例：太空探索遊戲，玩家在外星球收集資源對抗怪物，有升級系統跟裝備合成" style={{ width: "100%", height: 130, background: "#080814", border: `1px solid ${border}`, borderRadius: 8, padding: "9px 12px", color: "#e2e8f0", fontSize: 13, lineHeight: 1.6, resize: "none", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} />
+                  <label style={{ fontSize: 11, color: subtext, display: "block", marginBottom: 5 }}>遊戲內容描述</label>
+                  <textarea value={gameContent} onChange={(e) => setGameContent(e.target.value)} placeholder="描述你想做的遊戲：主題、玩法、角色、故事...&#10;例：太空探索遊戲，玩家在外星球收集資源對抗怪物，有升級系統跟裝備合成" style={{ width: "100%", height: 130, background: isDark ? "#080814" : "#f5f6ff", border: `1px solid ${border}`, borderRadius: 8, padding: "9px 12px", color: text, fontSize: 13, lineHeight: 1.6, resize: "none", outline: "none", boxSizing: "border-box", fontFamily: "inherit", transition: "background 0.3s, color 0.3s" }} />
                 </div>
               </div>
             </div>
 
             {/* Templates */}
             <div>
-              <div style={{ fontSize: 13, color: "#777", fontWeight: 700, marginBottom: 14 }}>
-                選擇遊戲類型 <span style={{ color: "#444", fontWeight: 400, fontSize: 11 }}>（點「查看技術文件」可展開相關資源連結）</span>
+              <div style={{ fontSize: 13, color: subtext, fontWeight: 700, marginBottom: 14 }}>
+                選擇遊戲類型 <span style={{ color: isDark ? "#444" : "#aaa", fontWeight: 400, fontSize: 11 }}>（點「查看技術文件」可展開相關資源連結）</span>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))", gap: 14 }}>
                 {TEMPLATES.map((t) => (
-                  <TemplateCard key={t.id} t={t} selected={selectedTemplate?.id === t.id} onSelect={setSelectedTemplate} />
+                  <TemplateCard key={t.id} t={t} selected={selectedTemplate?.id === t.id} onSelect={setSelectedTemplate} isDark={isDark} />
                 ))}
               </div>
             </div>
@@ -718,9 +766,9 @@ export default function App() {
             {/* Generate */}
             <button onClick={handleGenerate} disabled={loading || !selectedTemplate || !gameContent.trim()} style={{
               width: "100%", padding: "15px 24px",
-              background: loading || !selectedTemplate || !gameContent.trim() ? "#13132a" : "linear-gradient(135deg, #4f46e5, #7c3aed)",
+              background: loading || !selectedTemplate || !gameContent.trim() ? (isDark ? "#13132a" : "#e8eaff") : "linear-gradient(135deg, #4f46e5, #7c3aed)",
               border: "none", borderRadius: 12,
-              color: loading || !selectedTemplate || !gameContent.trim() ? "#333" : "#fff",
+              color: loading || !selectedTemplate || !gameContent.trim() ? (isDark ? "#333" : "#aaa") : "#fff",
               fontSize: 15, fontWeight: 800, cursor: loading || !selectedTemplate || !gameContent.trim() ? "not-allowed" : "pointer",
               fontFamily: "inherit", transition: "all 0.3s", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
             }}>
@@ -733,7 +781,7 @@ export default function App() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <button onClick={() => setPhase("input")} style={{ background: "#13132a", border: `1px solid ${border}`, color: "#aaa", padding: "7px 13px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>← 返回</button>
+              <button onClick={() => setPhase("input")} style={{ background: isDark ? "#13132a" : "#e8eaff", border: `1px solid ${border}`, color: isDark ? "#aaa" : "#5555aa", padding: "7px 13px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>← 返回</button>
               <div>
                 <div style={{ fontWeight: 800, fontSize: 17 }}>{selectedTemplate.emoji} {gameTitle || "我的 3D 遊戲"}</div>
                 <div style={{ fontSize: 11, color: "#555" }}>模板：{selectedTemplate.name} · {selectedTemplate.stack}</div>
@@ -743,17 +791,17 @@ export default function App() {
             {aiAnalysis && (
               <div style={{ background: "#4f46e514", border: "1px solid #4f46e533", borderRadius: 12, padding: 18 }}>
                 <div style={{ color: "#a78bfa", fontSize: 12, fontWeight: 700, marginBottom: 8 }}>✨ Gemini 企劃分析</div>
-                <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "#c4b5fd" }}>{aiAnalysis}</p>
+                <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: isDark ? "#c4b5fd" : "#5b3fd4" }}>{aiAnalysis}</p>
               </div>
             )}
 
             {/* Tabs */}
-            <div style={{ display: "flex", gap: 4, background: "#080814", padding: 4, borderRadius: 10, border: `1px solid ${border}` }}>
+            <div style={{ display: "flex", gap: 4, background: isDark ? "#080814" : "#e8eaff", padding: 4, borderRadius: 10, border: `1px solid ${border}` }}>
               {[{ id: "yaml", label: "📄 YAML 設定檔" }, { id: "deploy", label: "🚀 逐步部署引導" }, { id: "docs", label: "📚 技術文件" }].map(({ id, label }) => (
                 <button key={id} onClick={() => setActiveTab(id)} style={{
                   flex: 1, padding: "9px 14px", borderRadius: 8, border: "none",
                   background: activeTab === id ? selectedTemplate.color : "transparent",
-                  color: activeTab === id ? "#fff" : "#555",
+                  color: activeTab === id ? "#fff" : subtext,
                   cursor: "pointer", fontSize: 13, fontWeight: activeTab === id ? 700 : 400, fontFamily: "inherit", transition: "all 0.2s",
                 }}>{label}</button>
               ))}
@@ -762,12 +810,12 @@ export default function App() {
             {activeTab === "yaml" && (
               <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 14, overflow: "hidden" }}>
                 <div style={{ padding: "13px 18px", borderBottom: `1px solid ${border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontWeight: 700, fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }}>📄 game-config.yml</span>
+                  <span style={{ fontWeight: 700, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", color: text }}>📄 game-config.yml</span>
                   <button onClick={downloadYAML} style={{ background: selectedTemplate.color, border: "none", color: "#fff", padding: "7px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
                     ⬇ 下載 YML
                   </button>
                 </div>
-                <pre style={{ margin: 0, padding: 18, fontSize: 12, lineHeight: 1.9, overflowX: "auto", fontFamily: "'JetBrains Mono', monospace", background: "#000" }}>
+                <pre style={{ margin: 0, padding: 18, fontSize: 12, lineHeight: 1.9, overflowX: "auto", fontFamily: "'JetBrains Mono', monospace", background: isDark ? "#000" : "#1a1a2e" }}>
                   {generatedYAML.split("\n").map((line, i) => {
                     let color = "#a8e6cf";
                     if (line.trim().startsWith("#")) color = "#3a3a5c";
@@ -782,27 +830,27 @@ export default function App() {
             {activeTab === "deploy" && <DeployGuide template={selectedTemplate} gameTitle={gameTitle || "我的 3D 遊戲"} />}
 
             {activeTab === "docs" && (
-              <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 14, padding: 22 }}>
-                <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 6 }}>{selectedTemplate.emoji} {selectedTemplate.name} — 相關資源</div>
-                <div style={{ fontSize: 13, color: "#777", marginBottom: 20 }}>{selectedTemplate.plain}</div>
+              <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 14, padding: 22, transition: "background 0.3s" }}>
+                <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 6, color: text }}>{selectedTemplate.emoji} {selectedTemplate.name} — 相關資源</div>
+                <div style={{ fontSize: 13, color: subtext, marginBottom: 20 }}>{selectedTemplate.plain}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {selectedTemplate.docs.map(({ label, url }) => (
                     <a key={url} href={url} target="_blank" rel="noopener noreferrer" style={{
                       display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "14px 18px", background: "#080814",
+                      padding: "14px 18px", background: isDark ? "#080814" : "#f5f6ff",
                       border: `1px solid ${selectedTemplate.color}33`, borderRadius: 10,
-                      color: "#ddd", textDecoration: "none", fontSize: 14, transition: "all 0.15s",
+                      color: text, textDecoration: "none", fontSize: 14, transition: "all 0.15s",
                     }}>
                       <span>{label}</span>
                       <span style={{ color: selectedTemplate.color, fontSize: 12 }}>開啟 ↗</span>
                     </a>
                   ))}
                 </div>
-                <div style={{ marginTop: 20, padding: 14, background: "#080814", border: `1px solid #1a1a3e`, borderRadius: 10 }}>
-                  <div style={{ fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>技術棧</div>
-                  <div style={{ fontSize: 13, color: "#aaa" }}>{selectedTemplate.stack}</div>
-                  <div style={{ fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', monospace", marginTop: 10, marginBottom: 6 }}>部署平台</div>
-                  <div style={{ fontSize: 13, color: "#aaa" }}>{selectedTemplate.deploy}</div>
+                <div style={{ marginTop: 20, padding: 14, background: isDark ? "#080814" : "#f5f6ff", border: `1px solid ${border}`, borderRadius: 10 }}>
+                  <div style={{ fontSize: 11, color: subtext, fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>技術棧</div>
+                  <div style={{ fontSize: 13, color: text }}>{selectedTemplate.stack}</div>
+                  <div style={{ fontSize: 11, color: subtext, fontFamily: "'JetBrains Mono', monospace", marginTop: 10, marginBottom: 6 }}>部署平台</div>
+                  <div style={{ fontSize: 13, color: text }}>{selectedTemplate.deploy}</div>
                 </div>
               </div>
             )}
