@@ -597,8 +597,7 @@ export default function App() {
   const [generatedYAML, setGeneratedYAML] = useState("");
   const [aiAnalysis, setAiAnalysis] = useState("");
   const [gameTitle, setGameTitle] = useState("");
-  const [geminiKey, setGeminiKey] = useState(process.env.NEXT_PUBLIC_GEMINI_KEY || "");
-  const [showKey, setShowKey] = useState(false);
+  const geminiKey = process.env.NEXT_PUBLIC_GEMINI_KEY || "";
   const [activeTab, setActiveTab] = useState("yaml");
   const fileRef = useRef();
 
@@ -673,19 +672,6 @@ export default function App() {
 
         {phase === "input" ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-
-            {/* API Key */}
-            <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 14, padding: 18 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                <span>🔑</span>
-                <span style={{ fontWeight: 700, fontSize: 13 }}>Gemini API Key</span>
-                <span style={{ marginLeft: "auto", fontSize: 10, color: "#444", fontFamily: "'JetBrains Mono', monospace" }}>選填 — 空白則用 Demo 模式</span>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input type={showKey ? "text" : "password"} placeholder="AIza..." value={geminiKey} onChange={(e) => setGeminiKey(e.target.value)} style={{ flex: 1, background: "#080814", border: `1px solid ${border}`, borderRadius: 8, padding: "9px 12px", color: "#e2e8f0", fontSize: 13, fontFamily: "'JetBrains Mono', monospace", outline: "none" }} />
-                <button onClick={() => setShowKey(!showKey)} style={{ background: "#13132a", border: `1px solid ${border}`, color: "#aaa", padding: "0 13px", borderRadius: 8, cursor: "pointer", fontSize: 15 }}>{showKey ? "🙈" : "👁️"}</button>
-              </div>
-            </div>
 
             {/* Upload + Content */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 18 }}>
